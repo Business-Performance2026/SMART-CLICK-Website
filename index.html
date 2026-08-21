@@ -597,11 +597,24 @@
   </div>
 </footer>
 
-<script>
+<script type="module">
 
-  /* ============ SHARED DATA LAYER (also used/edited by admin.html) ============ */
-  const STORAGE_KEYS = { products: 'sc_products', services: 'sc_services', pricing: 'sc_pricing' };
+  /* ============ FIREBASE (shared by index.html & admin.html) ============ */
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyCfpedRlmI3Lx26HuT2FnwAJXc5IXOPENI",
+    authDomain: "smart-click-website.firebaseapp.com",
+    projectId: "smart-click-website",
+    storageBucket: "smart-click-website.firebasestorage.app",
+    messagingSenderId: "88511054425",
+    appId: "1:88511054425:web:cbf5b2915e13f74f3e2748"
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+
+  /* ============ SHARED DATA LAYER ============ */
   const ICONS = {
     camera: '<path d="M6 18h24a4 4 0 014 4v6a4 4 0 01-4 4H6z"/><path d="M34 23l9-6v14l-9-6"/><circle cx="17" cy="25" r="4"/>',
     nvr: '<rect x="6" y="14" width="36" height="20" rx="3"/><line x1="6" y1="24" x2="42" y2="24"/>',
@@ -657,30 +670,12 @@
       desc_en:'Speakers plus gas and fire alarm sensors for full protection.' }
   ];
 
-  function loadData(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return fallback;
-      const parsed = JSON.parse(raw);
-      return (Array.isArray(parsed) && parsed.length) ? parsed : fallback;
-    }catch(e){ return fallback; }
-  }
-
-  function loadObject(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return fallback;
-      const parsed = JSON.parse(raw);
-      return (parsed && typeof parsed === 'object') ? Object.assign({}, fallback, parsed) : fallback;
-    }catch(e){ return fallback; }
-  }
-
   const DEFAULT_PRICING = { basic:'600.000', medium:'1,345.000', large:'2,630.000' };
 
   const SITE_DATA = {
-    products: loadData(STORAGE_KEYS.products, DEFAULT_PRODUCTS),
-    services: loadData(STORAGE_KEYS.services, DEFAULT_SERVICES),
-    pricing: loadObject(STORAGE_KEYS.pricing, DEFAULT_PRICING)
+    products: DEFAULT_PRODUCTS,
+    services: DEFAULT_SERVICES,
+    pricing: DEFAULT_PRICING
   };
 
   function renderPricing(){
@@ -780,6 +775,32 @@
   renderFooterProductLinks();
   renderStats();
   renderPricing();
+
+  /* ---- live data from Firestore (falls back to defaults above until it loads) ---- */
+  try{
+    onSnapshot(query(collection(db,'products'), orderBy('order')), snap => {
+      const items = [];
+      snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+      SITE_DATA.products = items.length ? items : DEFAULT_PRODUCTS;
+      renderProducts();
+      renderFooterProductLinks();
+      renderStats();
+    }, () => {});
+
+    onSnapshot(query(collection(db,'services'), orderBy('order')), snap => {
+      const items = [];
+      snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+      SITE_DATA.services = items.length ? items : DEFAULT_SERVICES;
+      renderServices();
+    }, () => {});
+
+    onSnapshot(doc(db,'settings','pricing'), snap => {
+      if(snap.exists()){
+        SITE_DATA.pricing = Object.assign({}, DEFAULT_PRICING, snap.data());
+        renderPricing();
+      }
+    }, () => {});
+  }catch(e){ /* Firestore unreachable — page keeps working with default content */ }
 
   // language toggle
   const html = document.documentElement;
