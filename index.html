@@ -154,6 +154,27 @@
   .process-step h3{font-size:15px; margin-bottom:6px;}
   .process-step p{font-size:12.5px; color:var(--ink-muted);}
 
+  /* ---------------- PLAN UPLOAD ---------------- */
+  .plan-upload{padding:20px 0 66px;}
+  .plan-upload-card{
+    max-width:420px; margin:0 auto; text-align:center;
+    background:var(--panel); border:1.5px dashed var(--line); border-radius:20px;
+    padding:34px 24px; box-shadow:var(--shadow);
+  }
+  .plan-upload-trigger{display:block; cursor:pointer;}
+  .plan-upload-icon{
+    width:64px; height:64px; border-radius:50%; margin:0 auto 16px;
+    background:rgba(18,184,163,0.12); color:var(--teal-dark);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .2s ease, background .2s ease;
+  }
+  .plan-upload-icon svg{width:30px; height:30px;}
+  .plan-upload-trigger:hover .plan-upload-icon{transform:scale(1.06); background:rgba(18,184,163,0.2);}
+  .plan-upload-text{font-size:16px; font-weight:800; color:var(--ink); margin-bottom:4px;}
+  .plan-upload-sub{font-size:12.5px; font-weight:600; color:#8a8074;}
+  .plan-upload-status{font-size:12.5px; color:var(--ink-muted); margin-top:16px; min-height:16px;}
+  .plan-upload-card .btn{margin-top:14px; width:100%;}
+
 /* ---------------- PRICING (matches packages PDF) ---------------- */
   .pricing-eyebrow{font-size:20px; margin-bottom:0;}
   .pricing{padding:76px 0;}
@@ -530,6 +551,35 @@
         <h3><span class="ar">استمتع بمنزلك الذكي</span><span class="en">Enjoy Your Smart Home</span></h3>
         <p><span class="ar">تحكم كامل من هاتفك في أي وقت</span><span class="en">Full control from your phone, anytime</span></p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PLAN UPLOAD (request quote by attaching plans) ================= -->
+<section class="plan-upload">
+  <div class="wrap">
+    <div class="plan-upload-card" data-reveal>
+      <label class="plan-upload-trigger" for="planFileInput">
+        <div class="plan-upload-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="6" width="36" height="36" rx="3"/>
+            <path d="M6 18h36M18 6v36"/>
+            <path d="M26 26h8M26 32h5"/>
+            <path d="M12 30a3 3 0 013-3h0a3 3 0 013 3v3h-6z"/>
+          </svg>
+        </div>
+        <div class="plan-upload-text">
+          <span class="ar">ارفق مخطط المنزل</span><span class="en">Attach Home Floor Plan</span>
+        </div>
+        <div class="plan-upload-sub">
+          <span class="ar">ارفق مخطط الكهرباء</span><span class="en">Attach Electrical Plan</span>
+        </div>
+      </label>
+      <input type="file" id="planFileInput" accept=".jpg,.jpeg,.png,.pdf" multiple style="display:none;">
+      <div class="plan-upload-status" id="planUploadStatus"></div>
+      <a class="btn btn-primary" id="planSendBtn" style="display:none;" target="_blank">
+        <span class="ar">فتح واتساب وإرسال</span><span class="en">Open WhatsApp &amp; Send</span>
+      </a>
     </div>
   </div>
 </section>
@@ -1131,6 +1181,71 @@
       productsToggleBtn.classList.toggle('open', isOpen);
       productsToggleBtn.querySelectorAll('.ar').forEach(el => el.textContent = isOpen ? 'عرض أقل' : 'جميع المنتجات');
       productsToggleBtn.querySelectorAll('.en').forEach(el => el.textContent = isOpen ? 'Show Less' : 'All Products');
+    });
+  }
+
+  // plan upload -> Firebase Storage -> prefilled WhatsApp link
+  function compressPlanImageToBlob(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1400;
+          let w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('compress failed')), 'image/jpeg', 0.85);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadPlanFile(file){
+    let blob = file;
+    let ext = 'jpg';
+    if(file.type === 'application/pdf'){
+      ext = 'pdf';
+    } else if(file.type.startsWith('image/')){
+      blob = await compressPlanImageToBlob(file);
+      ext = 'jpg';
+    }
+    const path = 'plans/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, blob);
+    return await getDownloadURL(storageRef);
+  }
+
+  const planFileInput = document.getElementById('planFileInput');
+  const planUploadStatus = document.getElementById('planUploadStatus');
+  const planSendBtn = document.getElementById('planSendBtn');
+  if(planFileInput){
+    planFileInput.addEventListener('change', async () => {
+      const files = Array.from(planFileInput.files || []);
+      if(!files.length) return;
+      const isArabic = html.getAttribute('data-lang') !== 'en';
+      planSendBtn.style.display = 'none';
+      planUploadStatus.textContent = isArabic ? 'جارٍ رفع الملفات...' : 'Uploading files...';
+      try{
+        const urls = [];
+        for(const file of files){ urls.push(await uploadPlanFile(file)); }
+        const baseMsg = isArabic ? 'مرحباً، أرغب بعرض أسعار لمنزلي.' : "Hello, I'd like a price quote for my home.";
+        const fileLabel = isArabic ? 'ملف مرفق' : 'Attached file';
+        let msg = baseMsg;
+        urls.forEach((u, i) => { msg += '\n' + fileLabel + ' ' + (i+1) + ': ' + u; });
+        planSendBtn.href = 'https://wa.me/96894446300?text=' + encodeURIComponent(msg);
+        planUploadStatus.textContent = isArabic ? 'تم الرفع ✓ اضغط الزر للإرسال' : 'Uploaded ✓ tap to send';
+        planSendBtn.style.display = 'inline-flex';
+      }catch(e){
+        planUploadStatus.textContent = isArabic ? 'تعذّر الرفع، حاول مرة أخرى' : 'Upload failed, please try again';
+      }
     });
   }
 
