@@ -145,8 +145,9 @@
 
   /* ---------------- PLAN UPLOAD ---------------- */
   .plan-upload{padding:20px 0 60px;}
+  .mini-tools-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:680px; margin:0 auto;}
   .plan-upload-card{
-    max-width:320px; margin:0 auto; text-align:center;
+    width:100%; text-align:center;
     background:linear-gradient(155deg, rgba(18,184,163,0.07), rgba(18,184,163,0.03));
     border:1px solid rgba(18,184,163,0.16); border-radius:16px;
     padding:22px 18px; box-shadow:none;
@@ -164,6 +165,14 @@
   .plan-upload-sub{font-size:11px; font-weight:600; color:#a49a8c;}
   .plan-upload-status{font-size:11px; color:var(--ink-muted); margin-top:12px; min-height:14px;}
   .plan-upload-card .btn{margin-top:10px; width:100%; font-size:12.5px; padding:9px 18px;}
+
+  .doc-code-form{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+  .doc-code-form input{
+    border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-family:inherit;
+    font-size:13px; text-align:center; background:#fff;
+  }
+  .doc-code-form input:focus{outline:none; border-color:var(--teal);}
+  .doc-code-form .btn{margin-top:0;}
 
 /* ---------------- PRICING (matches packages PDF) ---------------- */
   .pricing-eyebrow{font-size:20px; margin-bottom:0;}
@@ -276,6 +285,7 @@
     .product-grid{grid-template-columns:1fr 1fr;}
     .footer-columns{grid-template-columns:1fr;}
     .nav-inner{padding:10px 18px;}
+    .mini-tools-grid{grid-template-columns:1fr; max-width:320px;}
   }
 
   [data-reveal]{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
@@ -513,9 +523,11 @@
   </div>
 </section>
 
-<!-- ================= PLAN UPLOAD (request quote by attaching plans) ================= -->
+<!-- ================= PLAN UPLOAD + OFFICIAL DOCUMENT ================= -->
 <section class="plan-upload">
   <div class="wrap">
+    <div class="mini-tools-grid">
+
     <div class="plan-upload-card" data-reveal>
       <label class="plan-upload-trigger" for="planFileInput">
         <div class="plan-upload-icon">
@@ -538,6 +550,34 @@
       <a class="btn btn-primary" id="planSendBtn" style="display:none;" target="_blank">
         <span class="ar">فتح واتساب وإرسال</span><span class="en">Open WhatsApp &amp; Send</span>
       </a>
+    </div>
+
+    <div class="plan-upload-card" data-reveal>
+      <button class="plan-upload-trigger" id="docTriggerBtn" type="button" style="border:none; background:none; width:100%; font-family:inherit;">
+        <div class="plan-upload-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 6h16l8 8v28H12z"/>
+            <path d="M28 6v8h8"/>
+            <path d="M18 28h12M18 33h8"/>
+            <circle cx="19" cy="22" r="3"/>
+          </svg>
+        </div>
+        <div class="plan-upload-text">
+          <span class="ar">تحميل خطاب رسمي</span><span class="en">Download Official Letter</span>
+        </div>
+        <div class="plan-upload-sub">
+          <span class="ar">خطاب لشركة الكهرباء</span><span class="en">Letter for Electricity Company</span>
+        </div>
+      </button>
+      <div class="doc-code-form" id="docCodeForm" style="display:none;">
+        <input type="password" id="docCodeInput" inputmode="numeric" placeholder="أدخل الرمز">
+        <button class="btn btn-primary" id="docDownloadBtn" type="button">
+          <span class="ar">تحميل</span><span class="en">Download</span>
+        </button>
+      </div>
+      <div class="plan-upload-status" id="docStatus"></div>
+    </div>
+
     </div>
   </div>
 </section>
@@ -768,6 +808,7 @@
     <button class="tab-btn active" data-tab="products">المنتجات</button>
     <button class="tab-btn" data-tab="services">الخدمات</button>
     <button class="tab-btn" data-tab="pricing">الباقات</button>
+    <button class="tab-btn" data-tab="documents">الملفات</button>
   </div>
 
   <!-- ================= PRODUCTS PANEL ================= -->
@@ -872,6 +913,36 @@
     </div>
   </div>
 
+  <!-- ================= DOCUMENTS PANEL ================= -->
+  <div class="panel" id="panel-documents">
+
+    <div class="notice" style="margin-top:0;">
+      هذا الملف يظهر في الموقع خلف أيقونة "تحميل خطاب رسمي" — الزائر يحتاج يكتب الرمز الصحيح قبل ما يقدر يفتح الملف. غيّر الرمز من هنا أي وقت تبي.
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span> خطاب شركة الكهرباء</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>ملف PDF</label>
+          <div class="upload-box" id="docUploadBox">
+            <div class="hint" id="docUploadHint">اضغط لرفع أو استبدال ملف PDF</div>
+            <input type="file" accept="application/pdf" id="docFileInput">
+          </div>
+          <div id="docCurrentFile" style="margin-top:8px; font-size:12.5px; color:var(--ink-muted);"></div>
+        </div>
+        <div class="field">
+          <label>رمز التحميل (الرقم اللي يطلبه الموقع من الزائر)</label>
+          <input type="text" id="docAccessCodeInput" placeholder="مثال: 1234">
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-gold" id="docSaveBtn">حفظ</button>
+        <span id="docSavedMsg" style="display:none; color:var(--teal-dark); font-weight:700; font-size:13px; margin-inline-start:12px;">تم الحفظ ✓</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <footer class="note">سمارت كليك — لوحة تحكم مبسّطة لإدارة محتوى الموقع</footer>
@@ -969,7 +1040,8 @@
   const SITE_DATA = {
     products: DEFAULT_PRODUCTS,
     services: DEFAULT_SERVICES,
-    pricing: DEFAULT_PRICING
+    pricing: DEFAULT_PRICING,
+    documentAccess: { code:'', fileUrl:'' }
   };
 
   function renderPricing(){
@@ -1094,6 +1166,12 @@
         renderPricing();
       }
     }, () => {});
+
+    onSnapshot(doc(db,'settings','document_access'), snap => {
+      if(snap.exists()){
+        SITE_DATA.documentAccess = Object.assign({ code:'', fileUrl:'' }, snap.data());
+      }
+    }, () => {});
   }catch(e){ /* Firestore unreachable — page keeps working with default content */ }
 
   // language toggle
@@ -1207,6 +1285,40 @@
         console.error('Plan upload error:', e);
       }
     });
+  }
+
+  // official document download (code-protected)
+  const docTriggerBtn = document.getElementById('docTriggerBtn');
+  const docCodeForm = document.getElementById('docCodeForm');
+  const docCodeInput = document.getElementById('docCodeInput');
+  const docDownloadBtn = document.getElementById('docDownloadBtn');
+  const docStatus = document.getElementById('docStatus');
+  if(docTriggerBtn){
+    docTriggerBtn.addEventListener('click', () => {
+      const isOpen = docCodeForm.style.display !== 'none';
+      docCodeForm.style.display = isOpen ? 'none' : 'flex';
+      if(!isOpen) docCodeInput.focus();
+    });
+  }
+  if(docDownloadBtn){
+    docDownloadBtn.addEventListener('click', () => {
+      const isArabic = html.getAttribute('data-lang') !== 'en';
+      const entered = (docCodeInput.value || '').trim();
+      const correct = (SITE_DATA.documentAccess.code || '').trim();
+      const fileUrl = SITE_DATA.documentAccess.fileUrl || '';
+      if(!fileUrl){
+        docStatus.textContent = isArabic ? 'الملف غير متوفر حاليًا' : 'File not available yet';
+        return;
+      }
+      if(!correct || entered !== correct){
+        docStatus.textContent = isArabic ? 'الرمز غير صحيح' : 'Incorrect code';
+        return;
+      }
+      docStatus.textContent = isArabic ? 'جارٍ فتح الملف...' : 'Opening file...';
+      window.open(fileUrl, '_blank');
+      docCodeInput.value = '';
+    });
+    docCodeInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') docDownloadBtn.click(); });
   }
 
   // mobile nav
@@ -1565,6 +1677,62 @@
         alert('تعذّر الحفظ: ' + e.message);
       }
     });
+
+    /* ---------------- DOCUMENTS (protected downloads) ---------------- */
+    let docPendingFile = null;
+    let docCurrentUrl = '';
+    const docFileInput = document.getElementById('docFileInput');
+    const docUploadHint = document.getElementById('docUploadHint');
+    const docCurrentFileEl = document.getElementById('docCurrentFile');
+    const docAccessCodeInput = document.getElementById('docAccessCodeInput');
+
+    if(docFileInput){
+      docFileInput.addEventListener('change', () => {
+        const file = docFileInput.files[0];
+        if(!file) return;
+        docPendingFile = file;
+        docUploadHint.textContent = 'تم اختيار: ' + file.name + ' — اضغط حفظ لرفعه';
+      });
+    }
+
+    onSnapshot(doc(db,'settings','document_access'), snap => {
+      const data = snap.exists() ? snap.data() : { code:'', fileUrl:'' };
+      docCurrentUrl = data.fileUrl || '';
+      if(docAccessCodeInput) docAccessCodeInput.value = data.code || '';
+      if(docCurrentFileEl){
+        docCurrentFileEl.innerHTML = docCurrentUrl
+          ? 'الملف الحالي: <a href="'+docCurrentUrl+'" target="_blank" style="color:var(--teal-dark); font-weight:700;">فتح ومعاينة</a>'
+          : 'لا يوجد ملف مرفوع بعد';
+      }
+    });
+
+    const docSaveBtn = document.getElementById('docSaveBtn');
+    if(docSaveBtn){
+      docSaveBtn.addEventListener('click', async () => {
+        const originalLabel = docSaveBtn.textContent;
+        docSaveBtn.textContent = 'جارٍ الحفظ...'; docSaveBtn.disabled = true;
+        try{
+          let fileUrl = docCurrentUrl;
+          if(docPendingFile){
+            const path = 'documents/electricity-letter-' + Date.now() + '.pdf';
+            const storageRef = ref(storage, path);
+            await uploadBytes(storageRef, docPendingFile, { contentType:'application/pdf' });
+            fileUrl = await getDownloadURL(storageRef);
+          }
+          const code = (docAccessCodeInput.value || '').trim();
+          await setDoc(doc(db,'settings','document_access'), { code, fileUrl }, { merge:true });
+          docPendingFile = null;
+          docFileInput.value = '';
+          docUploadHint.textContent = 'اضغط لرفع أو استبدال ملف PDF';
+          const msg = document.getElementById('docSavedMsg');
+          msg.style.display = 'inline';
+          setTimeout(() => { msg.style.display = 'none'; }, 2000);
+        }catch(e){
+          alert('تعذّر الحفظ: ' + e.message);
+        }
+        docSaveBtn.textContent = originalLabel; docSaveBtn.disabled = false;
+      });
+    }
   }
 
 
