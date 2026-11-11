@@ -177,59 +177,52 @@
 /* ---------------- PRICING (matches packages PDF) ---------------- */
   .pricing-eyebrow{font-size:20px; margin-bottom:0;}
   .pricing{padding:76px 0;}
-  .pricing-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:22px; align-items:stretch;}
-  .plan{
-    background:var(--panel); border-radius:18px;
-    display:flex; flex-direction:column;
-    position:relative; overflow:hidden; border:1px solid var(--line);
+  .pricing-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; align-items:stretch; max-width:760px; margin:0 auto;}
+  .plan{position:relative; border-radius:20px; overflow:hidden; aspect-ratio:1/1; box-shadow:0 12px 26px rgba(36,32,26,0.16); transition:transform .2s, box-shadow .2s;}
+  .plan:hover{transform:translateY(-4px); box-shadow:0 18px 34px rgba(36,32,26,0.22);}
+  .plan-head{
+    height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    padding:14px; color:#fff; position:relative; cursor:pointer; text-align:center; outline:none;
   }
-  .plan.c-teal{border-color:#0d8f80;}
-  .plan.c-purple{border-color:#4b3576; transform:scale(1.03); box-shadow:0 20px 40px rgba(75,53,118,0.22);}
-  .plan.c-amber{border-color:#b6752e;}
-
-  .plan-head{ padding:22px 22px 20px 22px; color:#fff; position:relative; }
-  .plan.c-teal .plan-head{ background:linear-gradient(120deg, #0a6f63, #12b8a3); }
-  .plan.c-purple .plan-head{ background:linear-gradient(120deg, #382a5c, #6c4fb3); }
-  .plan.c-amber .plan-head{ background:linear-gradient(120deg, #8f5a20, #d99a4e); }
-
+  .plan.c-teal .plan-head, .pm-card.c-teal .pm-head{ background:linear-gradient(135deg, #0a6f63, #12b8a3); }
+  .plan.c-purple .plan-head, .pm-card.c-purple .pm-head{ background:linear-gradient(135deg, #382a5c, #6c4fb3); }
+  .plan.c-amber .plan-head, .pm-card.c-amber .pm-head{ background:linear-gradient(135deg, #8f5a20, #d99a4e); }
+  .plan-head:focus-visible{box-shadow:inset 0 0 0 3px rgba(255,255,255,0.7);}
   .plan-badge{
-    position:absolute; top:16px; inset-inline-end:16px;
-    background:rgba(255,255,255,0.22); color:#fff; font-size:10.5px; font-weight:800;
-    padding:4px 11px; border-radius:999px; letter-spacing:0.02em;
+    position:absolute; top:10px; left:50%; transform:translateX(-50%); white-space:nowrap;
+    background:rgba(255,255,255,0.24); color:#fff; font-size:10px; font-weight:800;
+    padding:3px 10px; border-radius:999px;
   }
-  .plan h3{font-size:19px; font-weight:800; text-align:center;}
-  .price-row{ text-align:left; margin-top:16px; }
-  .price-box{
-    display:inline-block; background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.32);
-    border-radius:10px; padding:8px 16px;
-  }
-  .price-box .price{font-family:'Inter',sans-serif; font-size:24px; font-weight:800; color:#fff;}
+  .plan h3{font-size:19px; font-weight:800; line-height:1.3;}
+  .price-row{margin:0;}
+  .price-box{display:inline-block; background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.32); border-radius:10px; padding:6px 12px;}
+  .price-box .price{font-family:'Inter',sans-serif; font-size:21px; font-weight:800; color:#fff; white-space:nowrap;}
   html[dir="rtl"] .price-box .price{font-family:'Cairo',sans-serif;}
-  .price-box .price small{font-size:12px; font-weight:600; color:rgba(255,255,255,0.75);}
+  .price-box .price small{font-size:11px; font-weight:600; color:rgba(255,255,255,0.78);}
+  .tile-hint{font-size:11px; font-weight:700; opacity:.8;}
+  .plan-body{display:none;}
 
-  .plan .list{list-style:none; margin:14px 0 22px 0; flex:1; padding:0 18px;}
-  .plan .list li{
-    display:flex; align-items:center; gap:10px;
-    padding:8px 2px; font-size:13px; font-weight:600; color:var(--ink);
-    border-bottom:1px solid var(--line);
-  }
-  .plan .list li:last-child{border-bottom:none;}
-  .plan .list li .row-icon{
-    width:26px; height:26px; border-radius:8px; flex:none;
-    display:flex; align-items:center; justify-content:center; background:var(--bg-alt);
-  }
-  .plan .list li .row-icon svg{width:14px; height:14px;}
-  .plan.c-teal .list li .row-icon svg{color:#0d8f80;}
-  .plan.c-purple .list li .row-icon svg{color:#6c4fb3;}
-  .plan.c-amber .list li .row-icon svg{color:#b6752e;}
-  .plan .list li .item-name{flex:1;}
-  .plan .list li .qty{
-    font-size:11px; font-weight:800; flex:none;
-  }
-  .plan.c-teal .list li .qty{color:#0d8f80;}
-  .plan.c-purple .list li .qty{color:#6c4fb3;}
-  .plan.c-amber .list li .qty{color:#b6752e;}
-  .plan .btn{width:calc(100% - 36px); margin:0 18px 22px 18px;}
+  /* modal */
+  .pm-overlay{position:fixed; inset:0; z-index:300; background:rgba(20,16,10,0.55); display:none; align-items:center; justify-content:center; padding:16px;}
+  .pm-overlay.open{display:flex;}
+  .pm-card{background:var(--panel,#fff); width:100%; max-width:440px; max-height:88vh; border-radius:20px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 60px rgba(0,0,0,0.35);}
+  .pm-head{color:#fff; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .pm-head h3{font-size:18px; font-weight:800;}
+  .pm-price{font-family:'Inter',sans-serif; font-weight:800; font-size:17px; margin-top:4px; white-space:nowrap;}
+  html[dir="rtl"] .pm-price{font-family:'Cairo',sans-serif;}
+  .pm-close{flex:none; width:34px; height:34px; border-radius:50%; border:none; background:rgba(255,255,255,0.22); color:#fff; font-size:20px; line-height:1; cursor:pointer;}
+  .pm-scroll{overflow-y:auto; padding:6px 18px 4px;}
+  .pm-card .list{list-style:none; margin:0; padding:0;}
+  .pm-card .list li{display:flex; align-items:center; gap:10px; padding:9px 2px; font-size:13px; font-weight:600; color:var(--ink); border-bottom:1px solid var(--line);}
+  .pm-card .list li:last-child{border-bottom:none;}
+  .pm-card .list li .row-icon{width:26px; height:26px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; background:var(--bg-alt);}
+  .pm-card .list li .row-icon svg{width:14px; height:14px;}
+  .pm-card .list li .item-name{flex:1;}
+  .pm-card .list li .qty{font-size:11px; font-weight:800; flex:none;}
+  .pm-card.c-teal .list svg, .pm-card.c-teal .qty{color:#0d8f80;}
+  .pm-card.c-purple .list svg, .pm-card.c-purple .qty{color:#6c4fb3;}
+  .pm-card.c-amber .list svg, .pm-card.c-amber .qty{color:#b6752e;}
+  .pm-card .btn{margin:12px 18px 18px; width:calc(100% - 36px);}
 
   /* ---------------- FOOTER ---------------- */
   footer{background:var(--dark); color:rgba(255,255,255,0.85); padding:60px 0 0;}
@@ -257,12 +250,21 @@
   .product-grid > *, .service-list > *, .pricing-grid > *,
   .footer-columns > *, .hero-features > *, .why-grid > *, .stats-grid > * { min-width:0; }
 
+  @media (max-width:560px){
+    .pricing-grid{gap:9px;}
+    .plan{border-radius:14px;}
+    .plan-head{gap:9px; padding:8px 4px;}
+    .plan h3{font-size:12.5px;}
+    .price-box{padding:4px 6px;}
+    .price-box .price{font-size:13px;}
+    .price-box .price small{font-size:9px;}
+    .plan-badge{font-size:8.5px; padding:2px 6px; top:6px;}
+    .tile-hint{font-size:9.5px;}
+  }
   @media (max-width:980px){
     .hero-content{padding:44px 30px; max-width:100%;}
     .hero-features{justify-content:center;}
     .product-grid{grid-template-columns:repeat(2,1fr);}
-    .pricing-grid{grid-template-columns:1fr;}
-    .plan.c-purple{transform:none;}
     .footer-columns{grid-template-columns:1fr 1fr;}
     nav.links{display:none;}
     .hamburger{display:flex;}
@@ -596,11 +598,11 @@
 
       <!-- BASIC -->
       <div class="plan c-teal" data-reveal>
-        <div class="plan-head">
+        <div class="plan-head" role="button" tabindex="0">
           <h3><span class="ar">الباقة الأساسية</span><span class="en">Essential Package</span></h3>
           <div class="price-row"><div class="price-box"><span class="price"><span id="priceBasic">600.000</span> <small><span class="ar">ر.ع</span><span class="en">OMR</span></small></span></div></div>
         </div>
-        <ul class="list">
+        <div class="plan-body"><ul class="list">
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10l2 2h6v10H3z"/><circle cx="11" cy="13" r="3"/></svg></span><span class="item-name"><span class="ar">كاميرا 4MP</span><span class="en">4MP Camera</span></span><span class="qty" dir="ltr">×4</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="2"/><line x1="2" y1="13" x2="22" y2="13"/></svg></span><span class="item-name"><span class="ar">رسيفر NVR</span><span class="en">NVR Recorder</span></span><span class="qty" dir="ltr">×1</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg></span><span class="item-name"><span class="ar">قرص تخزين 2TB</span><span class="en">2TB Hard Disk</span></span><span class="qty" dir="ltr">×1</span></li>
@@ -617,17 +619,17 @@
         </ul>
         <a class="btn btn-ghost wa-link" data-msg-ar="مرحباً، أرغب بالاستفسار عن الباقة الأساسية" data-msg-en="Hello, I'd like to ask about the Essential Package" target="_blank">
           <span class="ar">اطلب هذه الباقة</span><span class="en">Request this package</span>
-        </a>
+        </a></div>
       </div>
 
       <!-- MEDIUM -->
       <div class="plan c-purple" data-reveal>
-        <div class="plan-head">
+        <div class="plan-head" role="button" tabindex="0">
           <span class="plan-badge"><span class="ar">الأكثر طلبًا</span><span class="en">Most Popular</span></span>
           <h3><span class="ar">الباقة المتوسطة</span><span class="en">Advanced Package</span></h3>
           <div class="price-row"><div class="price-box"><span class="price"><span id="priceMedium">1,345.000</span> <small><span class="ar">ر.ع</span><span class="en">OMR</span></small></span></div></div>
         </div>
-        <ul class="list">
+        <div class="plan-body"><ul class="list">
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10l2 2h6v10H3z"/><circle cx="11" cy="13" r="3"/></svg></span><span class="item-name"><span class="ar">كاميرا 4MP</span><span class="en">4MP Camera</span></span><span class="qty" dir="ltr">×6</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="2"/><line x1="2" y1="13" x2="22" y2="13"/></svg></span><span class="item-name"><span class="ar">رسيفر NVR 8 منافذ</span><span class="en">NVR 8-Port</span></span><span class="qty" dir="ltr">×1</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg></span><span class="item-name"><span class="ar">قرص تخزين 4TB</span><span class="en">4TB Hard Disk</span></span><span class="qty" dir="ltr">×1</span></li>
@@ -649,16 +651,16 @@
         </ul>
         <a class="btn btn-amber wa-link" data-msg-ar="مرحباً، أرغب بالاستفسار عن الباقة المتوسطة" data-msg-en="Hello, I'd like to ask about the Advanced Package" target="_blank">
           <span class="ar">اطلب هذه الباقة</span><span class="en">Request this package</span>
-        </a>
+        </a></div>
       </div>
 
       <!-- LARGE -->
       <div class="plan c-amber" data-reveal>
-        <div class="plan-head">
+        <div class="plan-head" role="button" tabindex="0">
           <h3><span class="ar">الباقة الكبرى</span><span class="en">Premium Package</span></h3>
           <div class="price-row"><div class="price-box"><span class="price"><span id="priceLarge">2,630.000</span> <small><span class="ar">ر.ع</span><span class="en">OMR</span></small></span></div></div>
         </div>
-        <ul class="list">
+        <div class="plan-body"><ul class="list">
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10l2 2h6v10H3z"/><circle cx="11" cy="13" r="3"/></svg></span><span class="item-name"><span class="ar">كاميرا 4MP</span><span class="en">4MP Camera</span></span><span class="qty" dir="ltr">×8</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="10" rx="2"/><line x1="2" y1="13" x2="22" y2="13"/></svg></span><span class="item-name"><span class="ar">رسيفر NVR 8 منافذ</span><span class="en">NVR 8-Port</span></span><span class="qty" dir="ltr">×1</span></li>
           <li><span class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg></span><span class="item-name"><span class="ar">قرص تخزين 8TB</span><span class="en">8TB Hard Disk</span></span><span class="qty" dir="ltr">×1</span></li>
@@ -690,13 +692,14 @@
         </ul>
         <a class="btn btn-ghost wa-link" data-msg-ar="مرحباً، أرغب بالاستفسار عن الباقة الكبرى" data-msg-en="Hello, I'd like to ask about the Premium Package" target="_blank">
           <span class="ar">اطلب هذه الباقة</span><span class="en">Request this package</span>
-        </a>
+        </a></div>
       </div>
 
     </div>
   </div>
 </section>
 
+<div class="pm-overlay" id="planModal" aria-hidden="true"><div class="pm-card" id="pmCard"><div class="pm-head"><div><h3 id="pmTitle"></h3><div class="pm-price" id="pmPrice"></div></div><button class="pm-close" id="pmClose" aria-label="close">&times;</button></div><div class="pm-scroll" id="pmScroll"></div></div></div>
 <!-- ================= FOOTER ================= -->
 <footer id="contact">
   <div class="wrap footer-columns" data-reveal>
@@ -1140,6 +1143,32 @@
   renderServices();
   renderFooterProductLinks();
   renderStats();
+
+  /* pricing tiles -> modal */
+  (function(){
+    const ov=document.getElementById('planModal'), card=document.getElementById('pmCard');
+    const T=document.getElementById('pmTitle'), P=document.getElementById('pmPrice'), S=document.getElementById('pmScroll');
+    document.querySelectorAll('.plan').forEach(plan=>{
+      const head=plan.querySelector('.plan-head');
+      const hint=document.createElement('div'); hint.className='tile-hint';
+      hint.innerHTML='<span class="ar">اضغط للتفاصيل</span><span class="en">Tap for details</span>';
+      head.appendChild(hint);
+      const open=()=>{
+        card.className='pm-card '+(['c-teal','c-purple','c-amber'].find(c=>plan.classList.contains(c))||'');
+        T.innerHTML=plan.querySelector('h3').innerHTML;
+        P.innerHTML=plan.querySelector('.price').innerHTML;
+        S.innerHTML=plan.querySelector('.plan-body').innerHTML;
+        ov.classList.add('open'); ov.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+        S.scrollTop=0;
+      };
+      head.addEventListener('click',open);
+      head.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    });
+    const close=()=>{ov.classList.remove('open'); ov.setAttribute('aria-hidden','true'); document.body.style.overflow='';};
+    document.getElementById('pmClose').addEventListener('click',close);
+    ov.addEventListener('click',e=>{if(e.target===ov)close();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ov.classList.contains('open'))close();});
+  })();
   renderPricing();
 
   /* ---- live data from Firestore (falls back to defaults above until it loads) ---- */
