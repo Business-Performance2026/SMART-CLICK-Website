@@ -1331,6 +1331,92 @@
       if(!isOpen) docCodeInput.focus();
     });
   }
+
+  /* ---- download the letter with the date replaced by today's date (nothing else changes) ---- */
+  async function downloadWithTodayDate(fileUrl){
+    const openOriginal = () => { window.open(fileUrl, '_blank'); return false; };
+    try{
+      const [pdfjs, PL] = await Promise.all([
+        import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs'),
+        import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm')
+      ]);
+      const wBlob = await (await fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs')).blob();
+      pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(wBlob);
+      const res = await fetch(fileUrl);
+      if(!res.ok) throw new Error('fetch failed');
+      const bytes = new Uint8Array(await res.arrayBuffer());
+
+      // today's date in Oman time
+      const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Muscat',day:'2-digit',month:'2-digit',year:'numeric'}).formatToParts(new Date());
+      const T = {}; parts.forEach(p => T[p.type] = p.value);
+
+      const toLatin = t => t.replace(/[٠-٩]/g, d => d.charCodeAt(0)-1632).replace(/[۰-۹]/g, d => d.charCodeAt(0)-1776);
+      const toArabicIndic = t => t.replace(/[0-9]/g, d => String.fromCharCode(1632 + +d));
+      const DATE_RE = /([0-9٠-٩۰-۹]{1,4})\s*([\/\-.])\s*([0-9٠-٩۰-۹]{1,2})\s*\2\s*([0-9٠-٩۰-۹]{1,4})/;
+
+      const task = pdfjs.getDocument({data: bytes.slice()});
+      const pdfjsDoc = await task.promise;
+      const pdfDoc = await PL.PDFDocument.load(bytes);
+      let replaced = 0;
+
+      for(let i = 1; i <= pdfjsDoc.numPages; i++){
+        const page = await pdfjsDoc.getPage(i);
+        const content = await page.getTextContent();
+        const pdfPage = pdfDoc.getPage(i-1);
+        for(const it of content.items){
+          if(!it.str) continue;
+          const m = it.str.match(DATE_RE);
+          if(!m) continue;
+          const a = toLatin(m[1]), sep = m[2], b = toLatin(m[3]), c = toLatin(m[4]);
+          if(a.length !== 4 && c.length !== 4) continue;           // must contain a 4-digit year
+          const arabicDigits = /[٠-٩۰-۹]/.test(m[0]);
+          const pad = b.length === 2 || (a.length !== 4 ? a.length === 2 : false);
+          const dd = pad ? T.day : String(+T.day), mm = pad ? T.month : String(+T.month);
+          let txt = a.length === 4 ? [T.year, mm, dd].join(sep) : [dd, mm, T.year].join(sep);
+          if(arabicDigits) txt = toArabicIndic(txt);
+
+          // geometry of the matched part inside this text item
+          const h = Math.abs(it.transform[3]) || it.height || 12;
+          const x0 = it.transform[4], y0 = it.transform[5];
+          const total = it.str.length || 1, w = it.width;
+          const rtl = /[֐-ࣿ]/.test(it.str.replace(DATE_RE,''));
+          const mctx = document.createElement('canvas').getContext('2d');
+          mctx.font = '400 100px Cairo, Inter, Arial, sans-serif';
+          const mt = t => mctx.measureText(t).width || 1;
+          const totalW = mt(it.str), preW = mt(it.str.slice(0, m.index)), dateW = mt(m[0]);
+          let sx = rtl ? x0 + w - w*(preW + dateW)/totalW : x0 + w*preW/totalW;
+          let mw = w * dateW / totalW;
+          if(it.str.trim() === m[0].trim()){ sx = x0; mw = w; }
+          const pad2 = 3;
+          pdfPage.drawRectangle({ x: sx - pad2, y: y0 - h*0.28, width: mw + pad2*2, height: h*1.25, color: PL.rgb(1,1,1) });
+
+          // render new date with the browser font (handles any digits), embed as image
+          const scale = 4, cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+          const fontStr = `400 ${h*scale}px Cairo, Inter, Arial, sans-serif`;
+          ctx.font = fontStr;
+          const tw = ctx.measureText(txt).width;
+          cv.width = Math.ceil(tw) + 4; cv.height = Math.ceil(h*scale*1.4);
+          ctx.font = fontStr; ctx.fillStyle = '#000'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(txt, 2, h*scale*1.05);
+          const png = await pdfDoc.embedPng(cv.toDataURL('image/png'));
+          const drawW = cv.width/scale, drawH = cv.height/scale;
+          pdfPage.drawImage(png, { x: sx - 0.5, y: y0 - h*0.28, width: drawW, height: drawH });
+          replaced++;
+        }
+      }
+      if(!replaced) return openOriginal();                           // no date found: give the original untouched
+      const out = await pdfDoc.save();
+      const url = URL.createObjectURL(new Blob([out], {type:'application/pdf'}));
+      const a = document.createElement('a');
+      a.href = url; a.download = 'letter-' + T.year + '-' + T.month + '-' + T.day + '.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      return true;
+    }catch(err){
+      console.warn('date stamping failed, opening original', err);
+      return openOriginal();
+    }
+  }
   if(docDownloadBtn){
     docDownloadBtn.addEventListener('click', () => {
       const isArabic = html.getAttribute('data-lang') !== 'en';
@@ -1345,9 +1431,11 @@
         docStatus.textContent = isArabic ? 'الرمز غير صحيح' : 'Incorrect code';
         return;
       }
-      docStatus.textContent = isArabic ? 'جارٍ فتح الملف...' : 'Opening file...';
-      window.open(fileUrl, '_blank');
+      docStatus.textContent = isArabic ? 'جارٍ تجهيز الملف...' : 'Preparing file...';
       docCodeInput.value = '';
+      downloadWithTodayDate(fileUrl).then(ok => {
+        docStatus.textContent = ok ? (isArabic ? 'تم تنزيل الخطاب بتاريخ اليوم' : 'Letter downloaded with today\'s date') : '';
+      });
     });
     docCodeInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') docDownloadBtn.click(); });
   }
