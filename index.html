@@ -1603,8 +1603,9 @@
     } else {
       sum.innerHTML = `<table><thead><tr>
         <th>${qcBi('المنتج', 'Product')}</th><th class="n">${qcBi('الكمية', 'Qty')}</th>
+        <th class="n">${qcBi('السعر', 'Price')}</th>
         <th class="n">${qcBi('الضريبة', 'VAT')}</th><th class="n">${qcBi('المجموع', 'Total')}</th></tr></thead><tbody>` +
-        t.lines.map(l => `<tr><td>${qcBi(l.name_ar, l.name_en)}</td><td class="n">${l.qty}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('') +
+        t.lines.map(l => `<tr><td>${qcBi(l.name_ar, l.name_en)}</td><td class="n">${l.qty}</td><td class="n">${qcFmt(l.price)}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('') +
         `</tbody></table>
         <div class="qc-tot">
           <div><span>${qcBi('المجموع', 'Subtotal')}</span><span class="num">${qcFmt(t.subtotal)} OMR</span></div>
@@ -1670,7 +1671,7 @@
     const rows = q.t.lines.map((l, i) => `<tr>
       <td class="c">${i + 1}</td>
       <td><div class="pa">${qcEsc(l.name_ar)}</div><div class="pe">${qcEsc(l.name_en)}</div></td>
-      <td class="c">${l.qty}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('');
+      <td class="c">${l.qty}</td><td class="n">${qcFmt(l.price)}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('');
     return `<style>
       .qp{width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#221e19;font-family:'Cairo','Inter',Arial,sans-serif;direction:rtl;padding:44px 46px 36px;position:relative}
       .qp *{box-sizing:border-box}
@@ -1693,7 +1694,7 @@
       .qp th small{display:block;font-weight:500;color:#d8c79c;font-family:'Inter',sans-serif;font-size:10px}
       .qp td{padding:9px 8px;border-bottom:1px solid #eee5d2;vertical-align:top}
       .qp td.c,.qp th.c{text-align:center;width:54px}
-      .qp td.n,.qp th.n{text-align:left;direction:ltr;font-family:'Inter',sans-serif;white-space:nowrap;width:104px}
+      .qp td.n,.qp th.n{text-align:left;direction:ltr;font-family:'Inter',sans-serif;white-space:nowrap;width:92px}
       .qp .pa{font-weight:700}
       .qp .pe{font-size:10.5px;color:#7a7365;font-family:'Inter',sans-serif;direction:ltr;text-align:right}
       .qp .tot{margin:18px 0 0;margin-inline-start:auto;width:330px;font-size:13px}
@@ -1723,6 +1724,7 @@
           <th class="c">#</th>
           <th>اسم المنتج<small>Product</small></th>
           <th class="c">الكمية<small>Qty</small></th>
+          <th class="n" style="text-align:left">سعر الوحدة<small>Unit price</small></th>
           <th class="n" style="text-align:left">ضريبة المنتج<small>VAT</small></th>
           <th class="n" style="text-align:left">المجموع<small>Total</small></th>
         </tr></thead>
