@@ -523,6 +523,55 @@
   .lenis.lenis-smooth{ scroll-behavior:auto !important; }
   .lenis.lenis-stopped{ overflow:hidden; }
   section[id]{ scroll-margin-top:70px; }
+
+  /* ================= QUOTE CALCULATOR ================= */
+  .calc{ padding:76px 0 84px; background:linear-gradient(180deg,var(--bg-alt),var(--bg)); }
+  .calc[hidden]{ display:none; }
+  .qc-card{ max-width:760px; margin:0 auto; background:#fff; border:1px solid rgba(184,151,90,0.3); border-radius:22px; box-shadow:0 18px 40px -22px rgba(34,30,25,0.35); padding:22px; }
+  .qc-sub{ text-align:center; color:var(--ink-muted,#6b6458); font-size:13.5px; margin:-4px 0 22px; }
+  .qc-title{ font-size:13px; font-weight:800; color:#8b6d35; letter-spacing:.02em; margin:0 0 10px; }
+  .qc-cust{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:22px; }
+  .qc-cust input{ width:100%; border:1px solid #e3dac6; border-radius:12px; padding:11px 12px; font:inherit; font-size:14px; background:#fffdf8; color:var(--ink); min-width:0; }
+  .qc-cust input:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(18,184,163,0.15); }
+  .qc-list{ display:flex; flex-direction:column; }
+  .qc-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 2px; border-bottom:1px solid #eee5d2; }
+  .qc-row:last-child{ border-bottom:none; }
+  .qc-name{ font-size:14px; font-weight:700; color:var(--ink); }
+  .qc-price{ font-size:12px; color:var(--ink-muted,#6b6458); margin-top:2px; font-family:'Inter',sans-serif; }
+  .qc-step{ display:flex; align-items:center; gap:4px; flex:none; direction:ltr; }
+  .qc-step button{ width:34px; height:34px; border-radius:50%; border:1px solid #e3dac6; background:#fffdf8; font-size:18px; line-height:1; cursor:pointer; color:var(--ink); transition:all .2s; }
+  .qc-step button:hover{ border-color:var(--teal); color:var(--teal-dark); }
+  .qc-qty{ min-width:30px; text-align:center; font-weight:800; font-family:'Inter',sans-serif; font-size:15px; }
+  .qc-row.on .qc-qty{ color:var(--teal-dark); }
+  .qc-sum{ margin-top:20px; background:#fbf7ee; border-radius:16px; padding:14px 16px; }
+  .qc-sum table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .qc-sum th{ font-size:11.5px; color:#8b6d35; font-weight:800; text-align:start; padding:4px 4px 8px; border-bottom:1px solid #e6dcc4; }
+  .qc-sum td{ padding:7px 4px; border-bottom:1px dashed #eadfc7; vertical-align:top; }
+  .qc-sum td.n, .qc-sum th.n{ text-align:end; font-family:'Inter',sans-serif; white-space:nowrap; }
+  .qc-empty{ text-align:center; color:var(--ink-muted,#6b6458); font-size:13px; padding:6px 0; }
+  .qc-tot{ margin-top:10px; display:flex; flex-direction:column; gap:5px; font-size:13.5px; }
+  .qc-tot div{ display:flex; justify-content:space-between; }
+  .qc-tot .num{ font-family:'Inter',sans-serif; font-weight:700; direction:ltr; }
+  .qc-price{ direction:ltr; text-align:start; }
+  html[dir="rtl"] .qc-price{ text-align:right; }
+  .qc-tot .grand{ margin-top:4px; padding-top:9px; border-top:1px solid #d9cba7; font-size:16px; font-weight:800; color:var(--teal-dark); }
+  .qc-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .qc-actions .btn{ min-width:240px; justify-content:center; }
+  .qc-btn-main{ border:none; cursor:pointer; font-family:inherit; }
+  .qc-btn-main[disabled]{ opacity:.55; cursor:not-allowed; }
+  .qc-status{ font-size:12.5px; color:var(--ink-muted,#6b6458); min-height:18px; text-align:center; }
+  .qc-status.err{ color:var(--danger,#b5453b); font-weight:700; }
+  .qc-result{ margin-top:16px; padding:16px; border-radius:16px; background:#eefaf7; border:1px solid rgba(18,184,163,0.35); text-align:center; }
+  .qc-result[hidden]{ display:none; }
+  .qc-result h4{ font-size:15px; color:var(--teal-dark); margin-bottom:4px; }
+  .qc-result p{ font-size:12.5px; color:var(--ink-muted,#6b6458); margin-bottom:12px; }
+  .qc-result .qc-res-btns{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .qc-note{ margin-top:14px; font-size:11.5px; color:var(--ink-muted,#6b6458); text-align:center; }
+  @media (max-width:600px){
+    .qc-cust{ grid-template-columns:1fr; }
+    .qc-card{ padding:16px; border-radius:18px; }
+    .qc-actions .btn{ width:100%; }
+  }
 </style>
 </head>
 <body>
@@ -744,6 +793,49 @@
   </div>
 </section>
 
+<!-- ================= QUOTE CALCULATOR ================= -->
+<section class="calc" id="calculator" hidden>
+  <div class="wrap">
+    <div class="section-head center" data-reveal>
+      <div class="eyebrow pricing-eyebrow">
+        <span class="ar">احسب عرض سعرك</span><span class="en">Build Your Quote</span>
+      </div>
+    </div>
+    <div class="qc-card" data-reveal>
+      <p class="qc-sub"><span class="ar">اختر المنتجات والكميات، واحصل على عرض سعر PDF جاهز</span><span class="en">Pick products and quantities, get a ready PDF quotation</span></p>
+
+      <div class="qc-title"><span class="ar">بياناتك</span><span class="en">Your details</span></div>
+      <div class="qc-cust">
+        <input type="text" id="qcName" autocomplete="name" data-ph-ar="اسم العميل" data-ph-en="Customer name" placeholder="اسم العميل">
+        <input type="tel" id="qcPhone" autocomplete="tel" inputmode="tel" data-ph-ar="رقم الهاتف" data-ph-en="Phone number" placeholder="رقم الهاتف">
+        <input type="text" id="qcRegion" data-ph-ar="المنطقة / الولاية" data-ph-en="Region / Wilayat" placeholder="المنطقة / الولاية">
+      </div>
+
+      <div class="qc-title"><span class="ar">المنتجات</span><span class="en">Products</span></div>
+      <div class="qc-list" id="qcList"></div>
+
+      <div class="qc-sum" id="qcSum"></div>
+
+      <div class="qc-actions">
+        <button type="button" class="btn btn-primary qc-btn-main" id="qcGenBtn"><span class="ar">إنشاء عرض السعر (PDF)</span><span class="en">Create quotation (PDF)</span></button>
+        <div class="qc-status" id="qcStatus"></div>
+      </div>
+
+      <div class="qc-result" id="qcResult" hidden>
+        <h4><span class="ar">تم إنشاء عرض السعر ✓</span><span class="en">Your quotation is ready ✓</span></h4>
+        <p id="qcResultMsg"></p>
+        <div class="qc-res-btns">
+          <a class="btn btn-primary" id="qcDownload" download><span class="ar">تنزيل PDF</span><span class="en">Download PDF</span></a>
+          <button type="button" class="btn btn-ghost" id="qcShare" hidden><span class="ar">مشاركة (واتساب...)</span><span class="en">Share (WhatsApp...)</span></button>
+          <a class="btn btn-ghost" id="qcWa" target="_blank" rel="noopener"><span class="ar">أرسل لسمارت كليك واتساب</span><span class="en">Send to Smart Click on WhatsApp</span></a>
+        </div>
+      </div>
+
+      <div class="qc-note" id="qcNote"></div>
+    </div>
+  </div>
+</section>
+
 <div class="pm-overlay" id="planModal" aria-hidden="true"><div class="pm-card" id="pmCard"><div class="pm-head"><div><h3 id="pmTitle"></h3><div class="pm-price" id="pmPrice"></div></div><button class="pm-close" id="pmClose" aria-label="close">&times;</button></div><div class="pm-scroll" id="pmScroll"></div></div></div>
 <!-- ================= SERVICES ================= -->
 <section class="services" id="services">
@@ -927,6 +1019,7 @@
     <button class="tab-btn" data-tab="services">الخدمات</button>
     <button class="tab-btn" data-tab="pricing">الباقات</button>
     <button class="tab-btn" data-tab="documents">الملفات</button>
+    <button class="tab-btn" data-tab="calc">الحاسبة</button>
   </div>
 
   <!-- ================= PRODUCTS PANEL ================= -->
@@ -1061,6 +1154,103 @@
     </div>
   </div>
 
+  <!-- ================= CALCULATOR PANEL ================= -->
+  <div class="panel" id="panel-calc">
+
+    <div class="notice" style="margin-top:0;">
+      قسم "احسب عرض سعرك" يظهر في الموقع بعد ما تضيف منتج واحد على الأقل. الأسعار تكتبها بالريال العُماني (قبل الضريبة).
+    </div>
+
+    <div class="card">
+      <h2 id="cpFormTitle"><span class="dot"></span> إضافة منتج للحاسبة</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>الاسم بالعربي</label>
+          <input type="text" id="cpNameAr" placeholder="مثال: كاميرا خارجية 4MP">
+        </div>
+        <div class="field">
+          <label>الاسم بالإنجليزي</label>
+          <input type="text" id="cpNameEn" placeholder="e.g. 4MP Outdoor Camera">
+        </div>
+        <div class="field">
+          <label>سعر الوحدة (ر.ع، قبل الضريبة)</label>
+          <input type="text" id="cpPrice" inputmode="decimal" placeholder="45.000">
+        </div>
+        <div class="field">
+          <label>الضريبة</label>
+          <select id="cpTaxable"><option value="1">تُطبّق عليه الضريبة</option><option value="0">بدون ضريبة</option></select>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-gold" id="cpAddBtn">إضافة المنتج</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span> منتجات الحاسبة (<span id="cpCount">0</span>)</h2>
+      <div class="list" id="cpList"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span> إعدادات عرض السعر</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>اسم الشركة بالعربي</label>
+          <input type="text" id="csNameAr" placeholder="سمارت كليك">
+        </div>
+        <div class="field">
+          <label>اسم الشركة بالإنجليزي</label>
+          <input type="text" id="csNameEn" placeholder="Smart Click">
+        </div>
+        <div class="field">
+          <label>رقم الهاتف</label>
+          <input type="text" id="csPhone" placeholder="+968 9444 6300">
+        </div>
+        <div class="field">
+          <label>البريد الإلكتروني</label>
+          <input type="text" id="csEmail" placeholder="smartclick.om@gmail.com">
+        </div>
+        <div class="field">
+          <label>العنوان بالعربي</label>
+          <input type="text" id="csAddrAr" placeholder="سلطنة عُمان">
+        </div>
+        <div class="field">
+          <label>العنوان بالإنجليزي</label>
+          <input type="text" id="csAddrEn" placeholder="Sultanate of Oman">
+        </div>
+        <div class="field">
+          <label>الرقم الضريبي (اختياري)</label>
+          <input type="text" id="csVat" placeholder="OM1234567890">
+        </div>
+        <div class="field">
+          <label>نسبة الضريبة %</label>
+          <input type="text" id="csTax" inputmode="decimal" placeholder="5">
+        </div>
+        <div class="field">
+          <label>مدة صلاحية العرض (أيام)</label>
+          <input type="text" id="csDays" inputmode="numeric" placeholder="7">
+        </div>
+        <div class="field full">
+          <label>ملاحظات تظهر أسفل العرض بالعربي</label>
+          <textarea id="csNotesAr" placeholder="الأسعار تقريبية والسعر النهائي بعد المعاينة."></textarea>
+        </div>
+        <div class="field full">
+          <label>ملاحظات تظهر أسفل العرض بالإنجليزي</label>
+          <textarea id="csNotesEn" placeholder="Prices are estimates; final price is confirmed after a site visit."></textarea>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-gold" id="csSaveBtn">حفظ الإعدادات</button>
+        <span id="csSavedMsg" style="display:none; color:var(--teal-dark); font-weight:700; font-size:13px; margin-inline-start:12px;">تم الحفظ ✓</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span> آخر عروض الأسعار المرسلة</h2>
+      <div class="list" id="cqList"><div class="empty">لا توجد عروض بعد</div></div>
+    </div>
+  </div>
+
 </div>
 
 <footer class="note">سمارت كليك — لوحة تحكم مبسّطة لإدارة محتوى الموقع</footer>
@@ -1075,7 +1265,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import {
     getFirestore, collection, query, orderBy, onSnapshot, doc,
-    addDoc, updateDoc, deleteDoc, setDoc, writeBatch
+    addDoc, updateDoc, deleteDoc, setDoc, writeBatch, limit
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
   import {
     getStorage, ref, uploadBytes, getDownloadURL, deleteObject
@@ -1350,6 +1540,386 @@
         el.href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text || msgAr);
       });
     }, 0);
+  });
+
+  /* ============ QUOTE CALCULATOR (public) + its admin settings ============ */
+  const QC_DEFAULTS = {
+    taxRate: 5, validityDays: 7,
+    company_name_ar: 'سمارت كليك', company_name_en: 'Smart Click',
+    phone: '+968 9444 6300', email: 'smartclick.om@gmail.com',
+    address_ar: 'سلطنة عُمان', address_en: 'Sultanate of Oman', vat_no: '',
+    notes_ar: 'الأسعار تقريبية، والسعر النهائي يُؤكَّد بعد المعاينة.',
+    notes_en: 'Prices are estimates; the final price is confirmed after a site visit.'
+  };
+  const qc = { products: [], qty: {}, settings: Object.assign({}, QC_DEFAULTS), last: null };
+  let cpEditingId = null;
+  const CS_FIELDS = { csNameAr:'company_name_ar', csNameEn:'company_name_en', csPhone:'phone', csEmail:'email', csAddrAr:'address_ar', csAddrEn:'address_en', csVat:'vat_no', csTax:'taxRate', csDays:'validityDays', csNotesAr:'notes_ar', csNotesEn:'notes_en' };
+  const qcEl = id => document.getElementById(id);
+  const qcIsAr = () => document.documentElement.getAttribute('data-lang') !== 'en';
+  const qcEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const qcFmt = n => (Math.round(n * 1000) / 1000).toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const qcNum = v => { const n = parseFloat(String(v).replace(/,/g, '').replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632)); return isFinite(n) ? n : NaN; };
+  const qcBi = (ar, en) => '<span class="ar">' + qcEsc(ar) + '</span><span class="en">' + qcEsc(en || ar) + '</span>';
+
+  function qcLines(){
+    const rate = Number(qc.settings.taxRate) || 0;
+    const lines = [];
+    qc.products.forEach(p => {
+      const q = qc.qty[p.id] || 0;
+      if(q <= 0) return;
+      const price = Number(p.price) || 0;
+      const total = Math.round(price * q * 1000) / 1000;
+      const tax = p.taxable === false ? 0 : Math.round(total * rate / 100 * 1000) / 1000;
+      lines.push({ name_ar: p.name_ar || p.name_en || '', name_en: p.name_en || p.name_ar || '', qty: q, price, tax, total });
+    });
+    const subtotal = Math.round(lines.reduce((a, l) => a + l.total, 0) * 1000) / 1000;
+    const tax = Math.round(lines.reduce((a, l) => a + l.tax, 0) * 1000) / 1000;
+    return { lines, subtotal, tax, grand: Math.round((subtotal + tax) * 1000) / 1000, rate };
+  }
+
+  function qcRenderList(){
+    const sec = qcEl('calculator'); if(!sec) return;
+    sec.hidden = qc.products.length === 0;
+    qcEl('qcList').innerHTML = qc.products.map(p => `
+      <div class="qc-row ${qc.qty[p.id] ? 'on' : ''}" data-id="${p.id}">
+        <div>
+          <div class="qc-name">${qcBi(p.name_ar || p.name_en, p.name_en || p.name_ar)}</div>
+          <div class="qc-price">${qcFmt(Number(p.price) || 0)} OMR</div>
+        </div>
+        <div class="qc-step">
+          <button type="button" data-d="-1" aria-label="-">−</button>
+          <span class="qc-qty">${qc.qty[p.id] || 0}</span>
+          <button type="button" data-d="1" aria-label="+">+</button>
+        </div>
+      </div>`).join('');
+    qcRenderSummary();
+  }
+
+  function qcRenderSummary(){
+    const t = qcLines();
+    const sum = qcEl('qcSum'); if(!sum) return;
+    if(!t.lines.length){
+      sum.innerHTML = '<div class="qc-empty">' + qcBi('اختر المنتجات لتظهر لك التفاصيل هنا', 'Choose products to see the details here') + '</div>';
+    } else {
+      sum.innerHTML = `<table><thead><tr>
+        <th>${qcBi('المنتج', 'Product')}</th><th class="n">${qcBi('الكمية', 'Qty')}</th>
+        <th class="n">${qcBi('الضريبة', 'VAT')}</th><th class="n">${qcBi('المجموع', 'Total')}</th></tr></thead><tbody>` +
+        t.lines.map(l => `<tr><td>${qcBi(l.name_ar, l.name_en)}</td><td class="n">${l.qty}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('') +
+        `</tbody></table>
+        <div class="qc-tot">
+          <div><span>${qcBi('المجموع', 'Subtotal')}</span><span class="num">${qcFmt(t.subtotal)} OMR</span></div>
+          <div><span>${qcBi('الضريبة', 'VAT')} ${t.rate}%</span><span class="num">${qcFmt(t.tax)} OMR</span></div>
+          <div class="grand"><span>${qcBi('المجموع الكلي مع الضريبة', 'Grand total incl. VAT')}</span><span class="num">${qcFmt(t.grand)} OMR</span></div>
+        </div>`;
+    }
+    const note = qcEl('qcNote');
+    if(note) note.innerHTML = qcBi(qc.settings.notes_ar, qc.settings.notes_en);
+    qcResetResult();
+  }
+
+  function qcResetResult(){
+    const r = qcEl('qcResult'); if(r) r.hidden = true;
+    qc.last = null;
+  }
+
+  function qcSetStatus(msgAr, msgEn, isErr){
+    const s = qcEl('qcStatus'); if(!s) return;
+    s.className = 'qc-status' + (isErr ? ' err' : '');
+    s.innerHTML = msgAr ? qcBi(msgAr, msgEn) : '';
+  }
+
+  // placeholders follow the language
+  function qcPlaceholders(){
+    document.querySelectorAll('#calculator [data-ph-ar]').forEach(i => { i.placeholder = qcIsAr() ? i.dataset.phAr : i.dataset.phEn; });
+  }
+  qcPlaceholders();
+  new MutationObserver(qcPlaceholders).observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
+
+  qcEl('qcList').addEventListener('click', e => {
+    const b = e.target.closest('button[data-d]'); if(!b) return;
+    const row = b.closest('.qc-row'); const id = row.dataset.id;
+    qc.qty[id] = Math.max(0, Math.min(99, (qc.qty[id] || 0) + Number(b.dataset.d)));
+    row.querySelector('.qc-qty').textContent = qc.qty[id];
+    row.classList.toggle('on', qc.qty[id] > 0);
+    qcRenderSummary();
+  });
+  ['qcName','qcPhone','qcRegion'].forEach(id => qcEl(id).addEventListener('input', qcResetResult));
+
+  onSnapshot(query(collection(db, 'calc_products'), orderBy('order')), snap => {
+    qc.products = [];
+    snap.forEach(d => qc.products.push({ id: d.id, ...d.data() }));
+    qcRenderList(); qcRenderAdminProducts();
+  }, err => console.warn('calc_products', err.message));
+
+  onSnapshot(doc(db, 'settings', 'calculator'), snap => {
+    qc.settings = Object.assign({}, QC_DEFAULTS, snap.exists() ? snap.data() : {});
+    qcRenderSummary(); qcFillAdminSettings();
+  }, err => console.warn('settings/calculator', err.message));
+
+  /* ---------- PDF ---------- */
+  function qcLoadScript(src){
+    return new Promise((res, rej) => {
+      if(window.html2canvas) return res();
+      const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script load failed'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function qcPaperHtml(q){
+    const S = qc.settings, logo = (document.querySelector('header .brand img') || {}).src || '';
+    const rows = q.t.lines.map((l, i) => `<tr>
+      <td class="c">${i + 1}</td>
+      <td><div class="pa">${qcEsc(l.name_ar)}</div><div class="pe">${qcEsc(l.name_en)}</div></td>
+      <td class="c">${l.qty}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('');
+    return `<style>
+      .qp{width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#221e19;font-family:'Cairo','Inter',Arial,sans-serif;direction:rtl;padding:44px 46px 36px;position:relative}
+      .qp *{box-sizing:border-box}
+      .qp .top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:18px;border-bottom:2px solid #b8975a}
+      .qp .brand{display:flex;align-items:center;gap:14px}
+      .qp .brand img{width:78px;height:auto}
+      .qp .brand .t1{font-size:24px;font-weight:800;line-height:1.2}
+      .qp .brand .t2{font-size:13px;color:#6b6458;font-family:'Inter',sans-serif;letter-spacing:.06em}
+      .qp .co{font-size:11.5px;line-height:1.8;color:#4a443b;text-align:left;direction:ltr}
+      .qp .ttl{display:flex;justify-content:space-between;align-items:flex-end;margin:22px 0 16px}
+      .qp .ttl h1{font-size:26px;font-weight:800;color:#0d8f80;margin:0;line-height:1.2}
+      .qp .ttl h1 small{display:block;font-size:13px;color:#8b6d35;font-family:'Inter',sans-serif;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+      .qp .meta{font-size:12px;line-height:1.9;text-align:left;direction:ltr;font-family:'Inter',sans-serif}
+      .qp .meta b{color:#8b6d35}
+      .qp .cust{background:#fbf7ee;border:1px solid #eadfc7;border-radius:12px;padding:12px 16px;margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12.5px}
+      .qp .cust .l{font-size:10.5px;color:#8b6d35;font-weight:700}
+      .qp .cust .v{font-weight:700;margin-top:2px;word-break:break-word}
+      .qp table{width:100%;border-collapse:collapse;font-size:12.5px}
+      .qp th{background:#221e19;color:#fff;padding:9px 8px;font-weight:700;font-size:11.5px;text-align:right;line-height:1.35}
+      .qp th small{display:block;font-weight:500;color:#d8c79c;font-family:'Inter',sans-serif;font-size:10px}
+      .qp td{padding:9px 8px;border-bottom:1px solid #eee5d2;vertical-align:top}
+      .qp td.c,.qp th.c{text-align:center;width:54px}
+      .qp td.n,.qp th.n{text-align:left;direction:ltr;font-family:'Inter',sans-serif;white-space:nowrap;width:104px}
+      .qp .pa{font-weight:700}
+      .qp .pe{font-size:10.5px;color:#7a7365;font-family:'Inter',sans-serif;direction:ltr;text-align:right}
+      .qp .tot{margin:18px 0 0;margin-inline-start:auto;width:330px;font-size:13px}
+      .qp .tot div{display:flex;justify-content:space-between;padding:6px 10px}
+      .qp .tot .n{font-family:'Inter',sans-serif;font-weight:700;direction:ltr}
+      .qp .tot .g{background:#0d8f80;color:#fff;border-radius:10px;margin-top:6px;font-size:14.5px;font-weight:800;padding:10px}
+      .qp .notes{margin-top:30px;padding-top:12px;border-top:1px dashed #cdbd95;font-size:11.5px;color:#4a443b;line-height:1.9}
+      .qp .notes .en{direction:ltr;text-align:left;font-family:'Inter',sans-serif;color:#6b6458}
+      .qp .foot{position:absolute;bottom:20px;left:46px;right:46px;text-align:center;font-size:10.5px;color:#9a917f;font-family:'Inter',sans-serif}
+    </style>
+    <div class="qp">
+      <div class="top">
+        <div class="brand">${logo ? `<img src="${logo}">` : ''}<div><div class="t1">${qcEsc(S.company_name_ar)}</div><div class="t2">${qcEsc(S.company_name_en).toUpperCase()}</div></div></div>
+        <div class="co">${qcEsc(S.phone)}<br>${qcEsc(S.email)}<br>${qcEsc(S.address_en)}${S.vat_no ? '<br>VAT No: ' + qcEsc(S.vat_no) : ''}</div>
+      </div>
+      <div class="ttl">
+        <h1>عرض سعر<small>Quotation</small></h1>
+        <div class="meta"><b>No.</b> ${qcEsc(q.number)}<br><b>Date</b> ${qcEsc(q.dateStr)}<br><b>Valid until</b> ${qcEsc(q.validUntil)}</div>
+      </div>
+      <div class="cust">
+        <div><div class="l">اسم العميل / Customer</div><div class="v">${qcEsc(q.name)}</div></div>
+        <div><div class="l">رقم الهاتف / Phone</div><div class="v" style="direction:ltr;text-align:right">${qcEsc(q.phone)}</div></div>
+        <div><div class="l">المنطقة / Region</div><div class="v">${qcEsc(q.region || '—')}</div></div>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="c">#</th>
+          <th>اسم المنتج<small>Product</small></th>
+          <th class="c">الكمية<small>Qty</small></th>
+          <th class="n" style="text-align:left">ضريبة المنتج<small>VAT</small></th>
+          <th class="n" style="text-align:left">المجموع<small>Total</small></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="tot">
+        <div><span>المجموع / Subtotal</span><span class="n">${qcFmt(q.t.subtotal)} OMR</span></div>
+        <div><span>الضريبة / VAT ${q.t.rate}%</span><span class="n">${qcFmt(q.t.tax)} OMR</span></div>
+        <div class="g"><span>المجموع الكلي مع الضريبة<br><small style="font-weight:500;font-size:10.5px">Grand total incl. VAT</small></span><span class="n">${qcFmt(q.t.grand)} OMR</span></div>
+      </div>
+      <div class="notes">
+        <div>صالح لمدة ${qcEsc(S.validityDays)} أيام من تاريخ الإصدار. ${qcEsc(S.notes_ar)}</div>
+        <div class="en">Valid for ${qcEsc(S.validityDays)} days from the issue date. ${qcEsc(S.notes_en)}</div>
+      </div>
+      <div class="foot">smartclickoman.com</div>
+    </div>`;
+  }
+
+  async function qcBuildPdf(q){
+    await qcLoadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+    const PL = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;z-index:-1';
+    host.innerHTML = qcPaperHtml(q);
+    document.body.appendChild(host);
+    try{
+      if(document.fonts && document.fonts.ready) await document.fonts.ready;
+      await Promise.all([...host.querySelectorAll('img')].map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
+      const canvas = await window.html2canvas(host.querySelector('.qp'), { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+      const pdf = await PL.PDFDocument.create();
+      const PW = 595.28, PH = 841.89, k = PW / canvas.width;       // pt per canvas px
+      const sliceH = Math.floor(PH / k);
+      for(let y = 0; y < canvas.height - 6; y += sliceH){
+        const h = Math.min(sliceH, canvas.height - y);
+        const part = document.createElement('canvas'); part.width = canvas.width; part.height = h;
+        part.getContext('2d').drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+        const png = await pdf.embedPng(part.toDataURL('image/png'));
+        const page = pdf.addPage([PW, PH]);
+        page.drawImage(png, { x: 0, y: PH - h * k, width: PW, height: h * k });
+      }
+      return new Blob([await pdf.save()], { type: 'application/pdf' });
+    } finally { host.remove(); }
+  }
+
+  qcEl('qcGenBtn').addEventListener('click', async () => {
+    const name = qcEl('qcName').value.trim(), phone = qcEl('qcPhone').value.trim(), region = qcEl('qcRegion').value.trim();
+    const t = qcLines();
+    if(!name){ qcSetStatus('الرجاء كتابة اسم العميل', 'Please enter the customer name', true); qcEl('qcName').focus(); return; }
+    if(phone.replace(/\D/g, '').length < 7){ qcSetStatus('الرجاء كتابة رقم هاتف صحيح', 'Please enter a valid phone number', true); qcEl('qcPhone').focus(); return; }
+    if(!t.lines.length){ qcSetStatus('اختر منتجاً واحداً على الأقل', 'Choose at least one product', true); return; }
+
+    const btn = qcEl('qcGenBtn'); btn.disabled = true; qcEl('qcResult').hidden = true;
+    qcSetStatus('جارٍ تجهيز عرض السعر...', 'Preparing your quotation...');
+    try{
+      const now = new Date();
+      const parts = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Muscat', day: '2-digit', month: '2-digit', year: 'numeric' }).formatToParts(now).forEach(p => parts[p.type] = p.value);
+      const until = new Date(now.getTime() + (Number(qc.settings.validityDays) || 7) * 86400000);
+      const up = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Muscat', day: '2-digit', month: '2-digit', year: 'numeric' }).formatToParts(until).forEach(p => up[p.type] = p.value);
+      const q = {
+        number: 'SC-' + parts.year.slice(2) + parts.month + parts.day + '-' + String(Math.floor(1000 + Math.random() * 9000)),
+        dateStr: parts.day + '/' + parts.month + '/' + parts.year,
+        validUntil: up.day + '/' + up.month + '/' + up.year,
+        name, phone, region, t
+      };
+      const blob = await qcBuildPdf(q);
+      const fileName = q.number + '.pdf';
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      // upload + save a record (best effort: the customer still gets the PDF if this fails)
+      let pdfUrl = '';
+      try{
+        const r = ref(storage, 'quotes/' + fileName);
+        await uploadBytes(r, blob, { contentType: 'application/pdf' });
+        pdfUrl = await getDownloadURL(r);
+        await addDoc(collection(db, 'quotes'), {
+          number: q.number, name, phone, region, pdfUrl, createdAt: Date.now(),
+          subtotal: t.subtotal, tax: t.tax, total: t.grand,
+          lines: t.lines.map(l => ({ name_ar: l.name_ar, name_en: l.name_en, qty: l.qty, price: l.price, tax: l.tax, total: l.total }))
+        });
+      }catch(err){ console.warn('quote upload/save failed', err); }
+
+      const ar = qcIsAr();
+      const msg = ar
+        ? `السلام عليكم، أرسلت طلب عرض سعر رقم ${q.number}\nالاسم: ${name}\nالهاتف: ${phone}\n${region ? 'المنطقة: ' + region + '\n' : ''}الإجمالي: ${qcFmt(t.grand)} ر.ع (شامل الضريبة)` + (pdfUrl ? `\nرابط العرض: ${pdfUrl}` : '')
+        : `Hello, I'd like to confirm quotation ${q.number}\nName: ${name}\nPhone: ${phone}\n${region ? 'Region: ' + region + '\n' : ''}Total: ${qcFmt(t.grand)} OMR (incl. VAT)` + (pdfUrl ? `\nQuotation: ${pdfUrl}` : '');
+      qc.last = { q, file, blobUrl, msg };
+
+      const dl = qcEl('qcDownload'); dl.href = blobUrl; dl.download = fileName;
+      qcEl('qcWa').href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      qcEl('qcShare').hidden = !canShare;
+      qcEl('qcResultMsg').innerHTML = qcBi('رقم العرض: ' + q.number + ' — نزّل الملف أو شاركه، أو أرسل الطلب لنا على واتساب.', 'Quotation ' + q.number + ' — download or share it, or send the request to us on WhatsApp.');
+      qcEl('qcResult').hidden = false;
+      qcSetStatus('', '');
+      qcEl('qcResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }catch(err){
+      console.error(err);
+      qcSetStatus('تعذّر إنشاء الملف، حاول مرة أخرى', 'Could not create the file, please try again', true);
+    }
+    btn.disabled = false;
+  });
+
+  qcEl('qcShare').addEventListener('click', async () => {
+    if(!qc.last) return;
+    try{ await navigator.share({ files: [qc.last.file], title: qc.last.q.number, text: qc.last.msg }); }catch(e){ /* cancelled */ }
+  });
+
+  /* ---------- admin: calculator tab ---------- */
+  function qcRenderAdminProducts(){
+    const list = qcEl('cpList'); if(!list) return;
+    qcEl('cpCount').textContent = qc.products.length;
+    if(!qc.products.length){ list.innerHTML = '<div class="empty">لا توجد منتجات في الحاسبة بعد</div>'; return; }
+    list.innerHTML = qc.products.map(p => `
+      <div class="row-item">
+        <div class="meta">
+          <div class="t1">${qcEsc(p.name_ar || '')}</div>
+          <div class="t2">${qcEsc(p.name_en || '')} — ${qcFmt(Number(p.price) || 0)} ر.ع ${p.taxable === false ? '(بدون ضريبة)' : ''}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm" data-cpedit="${p.id}">تعديل</button>
+          <button class="btn btn-danger-ghost btn-sm" data-cpdel="${p.id}">حذف</button>
+        </div>
+      </div>`).join('');
+  }
+  function cpReset(){
+    cpEditingId = null;
+    ['cpNameAr','cpNameEn','cpPrice'].forEach(i => qcEl(i).value = '');
+    qcEl('cpTaxable').value = '1';
+    qcEl('cpAddBtn').textContent = 'إضافة المنتج';
+    qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> إضافة منتج للحاسبة';
+  }
+  qcEl('cpList').addEventListener('click', async e => {
+    const del = e.target.closest('[data-cpdel]'), ed = e.target.closest('[data-cpedit]');
+    if(del){
+      if(!confirm('حذف هذا المنتج من الحاسبة؟')) return;
+      del.textContent = '...';
+      try{ await deleteDoc(doc(db, 'calc_products', del.dataset.cpdel)); }catch(err){ alert('تعذّر الحذف: ' + err.message); }
+      if(cpEditingId === del.dataset.cpdel) cpReset();
+    } else if(ed){
+      const p = qc.products.find(x => x.id === ed.dataset.cpedit); if(!p) return;
+      cpEditingId = p.id;
+      qcEl('cpNameAr').value = p.name_ar || ''; qcEl('cpNameEn').value = p.name_en || '';
+      qcEl('cpPrice').value = p.price; qcEl('cpTaxable').value = p.taxable === false ? '0' : '1';
+      qcEl('cpAddBtn').textContent = 'حفظ التعديلات';
+      qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> تعديل المنتج';
+      qcEl('cpNameAr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+  qcEl('cpAddBtn').addEventListener('click', async () => {
+    const nameAr = qcEl('cpNameAr').value.trim(), nameEn = qcEl('cpNameEn').value.trim(), price = qcNum(qcEl('cpPrice').value);
+    if(!nameAr && !nameEn){ alert('اكتب اسم المنتج بلغة واحدة على الأقل'); return; }
+    if(!isFinite(price) || price < 0){ alert('اكتب السعر بشكل صحيح، مثال: 45.000'); return; }
+    const btn = qcEl('cpAddBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+    const data = { name_ar: nameAr, name_en: nameEn, price: Math.round(price * 1000) / 1000, taxable: qcEl('cpTaxable').value !== '0' };
+    try{
+      if(cpEditingId) await updateDoc(doc(db, 'calc_products', cpEditingId), data);
+      else await addDoc(collection(db, 'calc_products'), Object.assign(data, { order: Date.now() }));
+      cpReset();
+    }catch(err){ alert('تعذّر الحفظ: ' + err.message); btn.textContent = label; }
+    btn.disabled = false;
+  });
+
+  function qcFillAdminSettings(){
+    if(document.activeElement && document.activeElement.id in CS_FIELDS) return;   // don't overwrite while typing
+    Object.entries(CS_FIELDS).forEach(([id, key]) => { const el = qcEl(id); if(el) el.value = qc.settings[key] == null ? '' : qc.settings[key]; });
+  }
+  qcEl('csSaveBtn').addEventListener('click', async () => {
+    const data = {};
+    Object.entries(CS_FIELDS).forEach(([id, key]) => { data[key] = qcEl(id).value.trim(); });
+    const tax = qcNum(data.taxRate), days = qcNum(data.validityDays);
+    if(!isFinite(tax) || tax < 0 || tax > 100){ alert('نسبة الضريبة يجب أن تكون بين 0 و 100'); return; }
+    data.taxRate = tax; data.validityDays = isFinite(days) && days > 0 ? Math.round(days) : 7;
+    const btn = qcEl('csSaveBtn'); btn.disabled = true;
+    try{
+      await setDoc(doc(db, 'settings', 'calculator'), data, { merge: true });
+      const m = qcEl('csSavedMsg'); m.style.display = 'inline'; setTimeout(() => m.style.display = 'none', 2500);
+    }catch(err){ alert('تعذّر الحفظ: ' + err.message); }
+    btn.disabled = false;
+  });
+
+  let cqStarted = false;
+  onAuthStateChanged(auth, user => {
+    if(!user || cqStarted) return;
+    cqStarted = true;
+    onSnapshot(query(collection(db, 'quotes'), orderBy('createdAt', 'desc'), limit(30)), snap => {
+      const list = qcEl('cqList'); const items = [];
+      snap.forEach(d => items.push(d.data()));
+      list.innerHTML = items.length ? items.map(x => `
+        <div class="row-item">
+          <div class="meta">
+            <div class="t1">${qcEsc(x.number)} — ${qcEsc(x.name)}</div>
+            <div class="t2">${qcEsc(x.phone)}${x.region ? ' • ' + qcEsc(x.region) : ''} • ${qcFmt(Number(x.total) || 0)} ر.ع • ${new Date(x.createdAt).toLocaleDateString('en-GB')}</div>
+          </div>
+          <div class="actions">${x.pdfUrl ? `<a class="btn btn-ghost btn-sm" href="${qcEsc(x.pdfUrl)}" target="_blank" rel="noopener">فتح PDF</a>` : ''}</div>
+        </div>`).join('') : '<div class="empty">لا توجد عروض بعد</div>';
+    }, err => console.warn('quotes', err.message));
   });
 
   // products: show all / show less
