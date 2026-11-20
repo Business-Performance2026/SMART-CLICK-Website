@@ -572,6 +572,18 @@
     .qc-card{ padding:16px; border-radius:18px; }
     .qc-actions .btn{ width:100%; }
   }
+
+  .qc-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+  .qc-search{ width:100%; border:1px solid #e3dac6; border-radius:12px; padding:10px 12px; font:inherit; font-size:14px; background:#fffdf8; color:var(--ink); min-width:0; }
+  .qc-search:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(18,184,163,0.15); }
+  .qc-cats{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
+  .qc-cat{ flex:none; border:1px solid #e3dac6; background:#fffdf8; color:var(--ink); border-radius:999px; padding:7px 13px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all .2s; }
+  .qc-cat:hover{ border-color:var(--gold); }
+  .qc-cat.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .qc-more{ margin:12px auto 0; display:block; border:1px solid #e3dac6; background:#fff; color:var(--ink); border-radius:999px; padding:9px 20px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .qc-more[hidden]{ display:none; }
+  .qc-none{ text-align:center; color:var(--ink-muted,#6b6458); font-size:13px; padding:18px 0; }
+  .qc-list{ max-height:none; }
 </style>
 </head>
 <body>
@@ -812,7 +824,12 @@
       </div>
 
       <div class="qc-title"><span class="ar">المنتجات</span><span class="en">Products</span></div>
+      <div class="qc-tools">
+        <input type="search" class="qc-search" id="qcSearch" data-ph-ar="ابحث عن منتج..." data-ph-en="Search products..." placeholder="ابحث عن منتج...">
+        <div class="qc-cats" id="qcCats"></div>
+      </div>
       <div class="qc-list" id="qcList"></div>
+      <button type="button" class="qc-more" id="qcMore" hidden><span class="ar">عرض المزيد</span><span class="en">Show more</span></button>
 
       <div class="qc-sum" id="qcSum"></div>
 
@@ -1180,6 +1197,10 @@
           <label>الضريبة</label>
           <select id="cpTaxable"><option value="1">تُطبّق عليه الضريبة</option><option value="0">بدون ضريبة</option></select>
         </div>
+        <div class="field full">
+          <label>التصنيف (اختياري، مثال: كاميرات المراقبة)</label>
+          <input type="text" id="cpCategory" placeholder="كاميرات المراقبة">
+        </div>
       </div>
       <div style="margin-top:16px;">
         <button class="btn btn-gold" id="cpAddBtn">إضافة المنتج</button>
@@ -1187,7 +1208,20 @@
     </div>
 
     <div class="card">
+      <h2><span class="dot"></span> استيراد منتجات من ملف</h2>
+      <div class="notice" style="margin-top:0;">
+        ارفع ملف Excel (أعمدة: الاسم بالعربي، الاسم بالإنجليزي، السعر، التصنيف، الضريبة) أو ملف JSON (نسخة نظام المحاسبة تنقرأ منها المنتجات فقط، بدون التكلفة أو العملاء). تظهر لك معاينة قبل الحفظ.
+      </div>
+      <div class="upload-box" style="margin-top:12px;">
+        <div class="hint">اضغط لاختيار ملف (.xlsx / .csv / .json)</div>
+        <input type="file" id="cpImportFile" accept=".xlsx,.xls,.csv,.json,application/json">
+      </div>
+      <div id="cpImportPreview" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card">
       <h2><span class="dot"></span> منتجات الحاسبة (<span id="cpCount">0</span>)</h2>
+      <div class="field" style="margin-bottom:12px;"><input type="text" id="cpSearch" placeholder="ابحث في المنتجات..."></div>
       <div class="list" id="cpList"></div>
     </div>
 
@@ -1577,10 +1611,36 @@
     return { lines, subtotal, tax, grand: Math.round((subtotal + tax) * 1000) / 1000, rate };
   }
 
-  function qcRenderList(){
-    const sec = qcEl('calculator'); if(!sec) return;
-    sec.hidden = qc.products.length === 0;
-    qcEl('qcList').innerHTML = qc.products.map(p => `
+  const QC_PAGE = 30;
+  const qcView = { cat: 'all', q: '', limit: QC_PAGE };
+  const qcCatOf = p => (p.category || '').trim() || '—';
+
+  function qcFiltered(){
+    const q = qcView.q.trim().toLowerCase();
+    return qc.products.filter(p => {
+      if(qcView.cat === 'selected' && !(qc.qty[p.id] > 0)) return false;
+      if(qcView.cat !== 'all' && qcView.cat !== 'selected' && qcCatOf(p) !== qcView.cat) return false;
+      if(q && !((p.name_ar || '') + ' ' + (p.name_en || '')).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function qcRenderCats(){
+    const box = qcEl('qcCats'); if(!box) return;
+    const cats = [];
+    qc.products.forEach(p => { const c = qcCatOf(p); if(c !== '—' && !cats.includes(c)) cats.push(c); });
+    if(qc.products.some(p => qcCatOf(p) === '—') && cats.length) cats.push('—');
+    const selCount = Object.values(qc.qty).filter(v => v > 0).length;
+    const chip = (key, html) => `<button type="button" class="qc-cat ${qcView.cat === key ? 'active' : ''}" data-cat="${qcEsc(key)}">${html}</button>`;
+    box.innerHTML = (cats.length ? chip('all', qcBi('الكل', 'All')) : '') +
+      (selCount ? chip('selected', qcBi('المختارة', 'Selected') + ' (' + selCount + ')') : '') +
+      cats.map(c => chip(c, c === '—' ? qcBi('أخرى', 'Other') : qcEsc(c))).join('');
+    box.style.display = cats.length ? '' : 'none';
+  }
+
+  function qcRenderRows(){
+    const all = qcFiltered(), shown = all.slice(0, qcView.limit);
+    qcEl('qcList').innerHTML = shown.length ? shown.map(p => `
       <div class="qc-row ${qc.qty[p.id] ? 'on' : ''}" data-id="${p.id}">
         <div>
           <div class="qc-name">${qcBi(p.name_ar || p.name_en, p.name_en || p.name_ar)}</div>
@@ -1591,9 +1651,22 @@
           <span class="qc-qty">${qc.qty[p.id] || 0}</span>
           <button type="button" data-d="1" aria-label="+">+</button>
         </div>
-      </div>`).join('');
-    qcRenderSummary();
+      </div>`).join('') : '<div class="qc-none">' + qcBi('لا توجد نتائج', 'No results') + '</div>';
+    qcEl('qcMore').hidden = all.length <= shown.length;
   }
+
+  function qcRenderList(){
+    const sec = qcEl('calculator'); if(!sec) return;
+    sec.hidden = qc.products.length === 0;
+    qcRenderCats(); qcRenderRows(); qcRenderSummary();
+  }
+
+  qcEl('qcSearch').addEventListener('input', e => { qcView.q = e.target.value; qcView.limit = QC_PAGE; qcRenderRows(); });
+  qcEl('qcCats').addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]'); if(!b) return;
+    qcView.cat = b.dataset.cat; qcView.limit = QC_PAGE; qcRenderCats(); qcRenderRows();
+  });
+  qcEl('qcMore').addEventListener('click', () => { qcView.limit += QC_PAGE; qcRenderRows(); });
 
   function qcRenderSummary(){
     const t = qcLines();
@@ -1642,15 +1715,18 @@
     qc.qty[id] = Math.max(0, Math.min(99, (qc.qty[id] || 0) + Number(b.dataset.d)));
     row.querySelector('.qc-qty').textContent = qc.qty[id];
     row.classList.toggle('on', qc.qty[id] > 0);
+    qcRenderCats();
+    if(qcView.cat === 'selected' && qc.qty[id] === 0) qcRenderRows();
     qcRenderSummary();
   });
   ['qcName','qcPhone','qcRegion'].forEach(id => qcEl(id).addEventListener('input', qcResetResult));
 
-  onSnapshot(query(collection(db, 'calc_products'), orderBy('order')), snap => {
-    qc.products = [];
-    snap.forEach(d => qc.products.push({ id: d.id, ...d.data() }));
+  // the whole catalog lives in ONE document (1 read per visitor instead of one read per product)
+  onSnapshot(doc(db, 'settings', 'calc_catalog'), snap => {
+    const items = snap.exists() && Array.isArray(snap.data().items) ? snap.data().items : [];
+    qc.products = items;
     qcRenderList(); qcRenderAdminProducts();
-  }, err => console.warn('calc_products', err.message));
+  }, err => console.warn('settings/calc_catalog', err.message));
 
   onSnapshot(doc(db, 'settings', 'calculator'), snap => {
     qc.settings = Object.assign({}, QC_DEFAULTS, snap.exists() ? snap.data() : {});
@@ -1670,7 +1746,7 @@
     const S = qc.settings, logo = (document.querySelector('header .brand img') || {}).src || '';
     const rows = q.t.lines.map((l, i) => `<tr>
       <td class="c">${i + 1}</td>
-      <td><div class="pa">${qcEsc(l.name_ar)}</div><div class="pe">${qcEsc(l.name_en)}</div></td>
+      <td><div class="pa">${qcEsc(l.name_ar)}</div>${l.name_en && l.name_en !== l.name_ar ? `<div class="pe">${qcEsc(l.name_en)}</div>` : ''}</td>
       <td class="c">${l.qty}</td><td class="n">${qcFmt(l.price)}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('');
     return `<style>
       .qp{width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#221e19;font-family:'Cairo','Inter',Arial,sans-serif;direction:rtl;padding:44px 46px 36px;position:relative}
@@ -1834,25 +1910,33 @@
   });
 
   /* ---------- admin: calculator tab ---------- */
+  const cpSave = items => setDoc(doc(db, 'settings', 'calc_catalog'), { items, updatedAt: Date.now() });
+  const cpNewId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  let cpQuery = '';
+
   function qcRenderAdminProducts(){
     const list = qcEl('cpList'); if(!list) return;
     qcEl('cpCount').textContent = qc.products.length;
     if(!qc.products.length){ list.innerHTML = '<div class="empty">لا توجد منتجات في الحاسبة بعد</div>'; return; }
-    list.innerHTML = qc.products.map(p => `
+    const q = cpQuery.trim().toLowerCase();
+    const rows = qc.products.filter(p => !q || ((p.name_ar || '') + ' ' + (p.name_en || '') + ' ' + (p.category || '')).toLowerCase().includes(q));
+    list.innerHTML = rows.slice(0, 60).map(p => `
       <div class="row-item">
         <div class="meta">
-          <div class="t1">${qcEsc(p.name_ar || '')}</div>
-          <div class="t2">${qcEsc(p.name_en || '')} — ${qcFmt(Number(p.price) || 0)} ر.ع ${p.taxable === false ? '(بدون ضريبة)' : ''}</div>
+          <div class="t1">${qcEsc(p.name_ar || p.name_en || '')}</div>
+          <div class="t2">${p.name_ar && p.name_en ? qcEsc(p.name_en) + ' — ' : ''}${qcFmt(Number(p.price) || 0)} ر.ع ${p.taxable === false ? '(بدون ضريبة)' : ''}${p.category ? ' • ' + qcEsc(p.category) : ''}</div>
         </div>
         <div class="actions">
           <button class="btn btn-ghost btn-sm" data-cpedit="${p.id}">تعديل</button>
           <button class="btn btn-danger-ghost btn-sm" data-cpdel="${p.id}">حذف</button>
         </div>
-      </div>`).join('');
+      </div>`).join('') + (rows.length > 60 ? `<div class="empty">يظهر أول 60 من ${rows.length} — استخدم البحث للوصول لأي منتج</div>` : '') + (!rows.length ? '<div class="empty">لا توجد نتائج</div>' : '');
   }
+  qcEl('cpSearch').addEventListener('input', e => { cpQuery = e.target.value; qcRenderAdminProducts(); });
+
   function cpReset(){
     cpEditingId = null;
-    ['cpNameAr','cpNameEn','cpPrice'].forEach(i => qcEl(i).value = '');
+    ['cpNameAr','cpNameEn','cpPrice','cpCategory'].forEach(i => qcEl(i).value = '');
     qcEl('cpTaxable').value = '1';
     qcEl('cpAddBtn').textContent = 'إضافة المنتج';
     qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> إضافة منتج للحاسبة';
@@ -1862,13 +1946,14 @@
     if(del){
       if(!confirm('حذف هذا المنتج من الحاسبة؟')) return;
       del.textContent = '...';
-      try{ await deleteDoc(doc(db, 'calc_products', del.dataset.cpdel)); }catch(err){ alert('تعذّر الحذف: ' + err.message); }
+      try{ await cpSave(qc.products.filter(x => x.id !== del.dataset.cpdel)); }catch(err){ alert('تعذّر الحذف: ' + err.message); }
       if(cpEditingId === del.dataset.cpdel) cpReset();
     } else if(ed){
       const p = qc.products.find(x => x.id === ed.dataset.cpedit); if(!p) return;
       cpEditingId = p.id;
       qcEl('cpNameAr').value = p.name_ar || ''; qcEl('cpNameEn').value = p.name_en || '';
       qcEl('cpPrice').value = p.price; qcEl('cpTaxable').value = p.taxable === false ? '0' : '1';
+      qcEl('cpCategory').value = p.category || '';
       qcEl('cpAddBtn').textContent = 'حفظ التعديلات';
       qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> تعديل المنتج';
       qcEl('cpNameAr').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1879,13 +1964,92 @@
     if(!nameAr && !nameEn){ alert('اكتب اسم المنتج بلغة واحدة على الأقل'); return; }
     if(!isFinite(price) || price < 0){ alert('اكتب السعر بشكل صحيح، مثال: 45.000'); return; }
     const btn = qcEl('cpAddBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
-    const data = { name_ar: nameAr, name_en: nameEn, price: Math.round(price * 1000) / 1000, taxable: qcEl('cpTaxable').value !== '0' };
+    const data = { name_ar: nameAr, name_en: nameEn, price: Math.round(price * 1000) / 1000, taxable: qcEl('cpTaxable').value !== '0', category: qcEl('cpCategory').value.trim() };
     try{
-      if(cpEditingId) await updateDoc(doc(db, 'calc_products', cpEditingId), data);
-      else await addDoc(collection(db, 'calc_products'), Object.assign(data, { order: Date.now() }));
+      const items = cpEditingId
+        ? qc.products.map(x => x.id === cpEditingId ? Object.assign({}, x, data) : x)
+        : qc.products.concat([Object.assign({ id: cpNewId() }, data)]);
+      await cpSave(items);
       cpReset();
     }catch(err){ alert('تعذّر الحفظ: ' + err.message); btn.textContent = label; }
     btn.disabled = false;
+  });
+
+  /* ---- import: Excel (.xlsx/.xls/.csv), simple JSON, or the accounting-app backup JSON ---- */
+  let cpPending = null;
+  const AR_RE = /[\u0600-\u06FF]/;
+  const COLS = {
+    ar:  ['الاسم بالعربي','اسم عربي','name_ar','arabic','عربي'],
+    en:  ['الاسم بالإنجليزي','الاسم بالانجليزي','اسم انجليزي','name_en','english','انجليزي','إنجليزي'],
+    nm:  ['الاسم','اسم المنتج','المنتج','اسم الصنف','الصنف','name','product','item','description','الوصف'],
+    pr:  ['السعر','سعر الوحدة','سعر البيع','price','unit price','selling price','sell price'],
+    cat: ['التصنيف','الفئة','القسم','category','group'],
+    tax: ['الضريبة','tax','vat']
+  };
+  function cpPick(row, keys){
+    const norm = k => String(k).trim().toLowerCase();
+    const map = {}; Object.keys(row).forEach(k => map[norm(k)] = row[k]);
+    for(const k of keys){ const v = map[norm(k)]; if(v !== undefined && v !== null && String(v).trim() !== '') return v; }
+    return '';
+  }
+  function cpNormalize(rows){
+    const out = [], seen = new Set(); let skipped = 0;
+    rows.forEach(r => {
+      let ar = String(cpPick(r, COLS.ar)).trim(), en = String(cpPick(r, COLS.en)).trim();
+      const nm = String(cpPick(r, COLS.nm)).trim();
+      if(nm && !ar && !en){ if(AR_RE.test(nm)) ar = nm; else en = nm; }
+      const price = qcNum(cpPick(r, COLS.pr));
+      if((!ar && !en) || !isFinite(price) || price <= 0){ skipped++; return; }
+      const taxRaw = String(cpPick(r, COLS.tax)).trim().toLowerCase();
+      const taxable = !(['لا','no','0','false','n','بدون','معفى','معفي'].includes(taxRaw));
+      const key = (ar + '|' + en + '|' + price).toLowerCase();
+      if(seen.has(key)){ skipped++; return; }
+      seen.add(key);
+      out.push({ name_ar: ar, name_en: en, price: Math.round(price * 1000) / 1000, taxable, category: String(cpPick(r, COLS.cat)).trim() });
+    });
+    return { items: out, skipped };
+  }
+  async function cpReadFile(file){
+    const name = file.name.toLowerCase();
+    if(name.endsWith('.json')){
+      const j = JSON.parse(await file.text());
+      // accounting-app backup: only products are read (name, price, category). Costs, customers etc. are ignored.
+      if(j && j.collections && Array.isArray(j.collections.products)) return j.collections.products.map(p => ({ name: p.name, price: p.price, category: p.category }));
+      if(Array.isArray(j)) return j;
+      if(j && Array.isArray(j.items)) return j.items;
+      throw new Error('شكل ملف JSON غير معروف');
+    }
+    if(!window.XLSX) await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('تعذّر تحميل قارئ Excel')); document.head.appendChild(sc); });
+    const wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    return window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  }
+  qcEl('cpImportFile').addEventListener('change', async e => {
+    const file = e.target.files[0]; if(!file) return;
+    const box = qcEl('cpImportPreview'); box.innerHTML = 'جارٍ قراءة الملف...';
+    try{
+      const rows = await cpReadFile(file);
+      const { items, skipped } = cpNormalize(rows);
+      if(!items.length) throw new Error('ما لقيت منتجات صالحة. تأكد من وجود عمود للاسم وعمود للسعر.');
+      cpPending = items;
+      const cats = new Set(items.map(i => i.category).filter(Boolean)).size;
+      box.innerHTML = `<div class="notice" style="margin:0 0 10px;">تم العثور على <b>${items.length}</b> منتج${cats ? ' في <b>' + cats + '</b> تصنيف' : ''}${skipped ? ' (تم تجاهل ' + skipped + ' صف: بدون سعر أو مكرر)' : ''}. هذي أول 6 للمعاينة:</div>` +
+        items.slice(0, 6).map(i => `<div class="row-item"><div class="meta"><div class="t1">${qcEsc(i.name_ar || i.name_en)}</div><div class="t2">${qcFmt(i.price)} ر.ع${i.category ? ' • ' + qcEsc(i.category) : ''}</div></div></div>`).join('') +
+        `<label style="display:flex;gap:8px;align-items:center;margin:12px 0;font-size:13px;"><input type="checkbox" id="cpReplace" checked> استبدال القائمة الحالية بالكامل (إذا ألغيتها تنضاف المنتجات فوق الموجودة)</label>
+         <button class="btn btn-gold" id="cpImportGo">استيراد ${items.length} منتج</button>
+         <button class="btn btn-ghost" id="cpImportCancel" style="margin-inline-start:8px;">إلغاء</button>`;
+    }catch(err){ cpPending = null; box.innerHTML = '<div class="notice" style="margin:0;color:var(--danger);">' + qcEsc(err.message) + '</div>'; }
+  });
+  qcEl('cpImportPreview').addEventListener('click', async e => {
+    if(e.target.id === 'cpImportCancel'){ cpPending = null; qcEl('cpImportPreview').innerHTML = ''; qcEl('cpImportFile').value = ''; return; }
+    if(e.target.id !== 'cpImportGo' || !cpPending) return;
+    const replace = qcEl('cpReplace').checked;
+    e.target.disabled = true; e.target.textContent = 'جارٍ الاستيراد...';
+    try{
+      const fresh = cpPending.map(i => Object.assign({ id: cpNewId() }, i));
+      await cpSave(replace ? fresh : qc.products.concat(fresh));
+      qcEl('cpImportPreview').innerHTML = '<div class="notice" style="margin:0;color:var(--teal-dark);">تم استيراد ' + fresh.length + ' منتج ✓</div>';
+      cpPending = null; qcEl('cpImportFile').value = '';
+    }catch(err){ alert('تعذّر الاستيراد: ' + err.message); e.target.disabled = false; e.target.textContent = 'إعادة المحاولة'; }
   });
 
   function qcFillAdminSettings(){
