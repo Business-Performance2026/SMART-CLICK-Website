@@ -1181,7 +1181,7 @@
   <div class="panel" id="panel-calc">
 
     <div class="notice" style="margin-top:0;">
-      قسم "احسب عرض سعرك" يظهر في الموقع بعد ما تضيف خيار واحد على الأقل. الأفضل تخلي القائمة قصيرة (8 إلى 12 خيار) وكل خيار بأيقونة واسم واضح وسعر يشمل التركيب إذا تبي، وتقدر تكتب في "الوصف القصير" وش يشمل. السعر بالريال العُماني قبل الضريبة.
+      قسم "احسب عرض سعرك" يظهر في الموقع بعد ما تضيف خيار واحد على الأقل. الأفضل تخلي القائمة قصيرة (8 إلى 12 خيار) وكل خيار بأيقونة واسم واضح وسعر يشمل التركيب إذا تبي، وتقدر تكتب في "الوصف القصير" وش يشمل. السعر بالريال العُماني، وهل هو شامل الضريبة أو قبلها تحدده من "إعدادات عرض السعر" بالأسفل.
     </div>
 
     <div class="card">
@@ -1196,7 +1196,7 @@
           <input type="text" id="cpNameEn" placeholder="e.g. 4MP Outdoor Camera">
         </div>
         <div class="field">
-          <label>سعر الوحدة (ر.ع، قبل الضريبة)</label>
+          <label>سعر الوحدة (ر.ع)</label>
           <input type="text" id="cpPrice" inputmode="decimal" placeholder="45.000">
         </div>
         <div class="field">
@@ -1284,6 +1284,10 @@
         <div class="field">
           <label>نسبة الضريبة %</label>
           <input type="text" id="csTax" inputmode="decimal" placeholder="5">
+        </div>
+        <div class="field">
+          <label>الأسعار اللي تدخلها للمنتجات</label>
+          <select id="csIncl"><option value="true">شاملة الضريبة (الضريبة تُستخرج منها)</option><option value="false">قبل الضريبة (الضريبة تنضاف فوقها)</option></select>
         </div>
         <div class="field">
           <label>مدة صلاحية العرض (أيام)</label>
@@ -1603,7 +1607,7 @@
 
   /* ============ QUOTE CALCULATOR (public) + its admin settings ============ */
   const QC_DEFAULTS = {
-    taxRate: 5, validityDays: 7,
+    taxRate: 5, validityDays: 7, pricesIncludeTax: true,
     company_name_ar: 'سمارت كليك', company_name_en: 'Smart Click',
     phone: '+968 9444 6300', email: 'smartclick.om@gmail.com',
     address_ar: 'سلطنة عُمان', address_en: 'Sultanate of Oman', vat_no: '',
@@ -1623,13 +1627,18 @@
 
   function qcLines(){
     const rate = Number(qc.settings.taxRate) || 0;
+    const incl = qc.settings.pricesIncludeTax !== false;
     const lines = [];
     qc.products.forEach(p => {
       const q = qc.qty[p.id] || 0;
       if(q <= 0) return;
-      const price = Number(p.price) || 0;
-      const total = Math.round(price * q * 1000) / 1000;
-      const tax = p.taxable === false ? 0 : Math.round(total * rate / 100 * 1000) / 1000;
+      const entered = Number(p.price) || 0;
+      const gross = Math.round(entered * q * 1000) / 1000;                       // price x qty as typed in the admin
+      let tax = 0;
+      if(p.taxable !== false) tax = incl ? Math.round(gross * rate / (100 + rate) * 1000) / 1000
+                                         : Math.round(gross * rate / 100 * 1000) / 1000;
+      const total = incl ? Math.round((gross - tax) * 1000) / 1000 : gross;      // line total before tax
+      const price = Math.round(total / q * 1000) / 1000;                         // unit price before tax
       lines.push({ name_ar: p.name_ar || p.name_en || '', name_en: p.name_en || p.name_ar || '', note_ar: p.note_ar || '', note_en: p.note_en || '', qty: q, price, tax, total });
     });
     const subtotal = Math.round(lines.reduce((a, l) => a + l.total, 0) * 1000) / 1000;
@@ -1673,7 +1682,7 @@
           <div>
             <div class="qc-name">${qcBi(p.name_ar || p.name_en, p.name_en || p.name_ar)}</div>
             ${(p.note_ar || p.note_en) ? `<div class="qc-desc">${qcBi(p.note_ar || p.note_en, p.note_en || p.note_ar)}</div>` : ''}
-            <div class="qc-price">${qcFmt(Number(p.price) || 0)} OMR</div>
+            <div class="qc-price">${qcFmt(Number(p.price) || 0)} OMR${qc.settings.pricesIncludeTax !== false && p.taxable !== false ? ' · ' + qcBi('شامل الضريبة', 'incl. VAT') : ''}</div>
           </div>
         </div>
         <div class="qc-step">
@@ -2099,12 +2108,14 @@
   function qcFillAdminSettings(){
     if(document.activeElement && document.activeElement.id in CS_FIELDS) return;   // don't overwrite while typing
     Object.entries(CS_FIELDS).forEach(([id, key]) => { const el = qcEl(id); if(el) el.value = qc.settings[key] == null ? '' : qc.settings[key]; });
+    qcEl('csIncl').value = String(qc.settings.pricesIncludeTax !== false);
   }
   qcEl('csSaveBtn').addEventListener('click', async () => {
     const data = {};
     Object.entries(CS_FIELDS).forEach(([id, key]) => { data[key] = qcEl(id).value.trim(); });
     const tax = qcNum(data.taxRate), days = qcNum(data.validityDays);
     if(!isFinite(tax) || tax < 0 || tax > 100){ alert('نسبة الضريبة يجب أن تكون بين 0 و 100'); return; }
+    data.pricesIncludeTax = qcEl('csIncl').value !== 'false';
     data.taxRate = tax; data.validityDays = isFinite(days) && days > 0 ? Math.round(days) : 7;
     const btn = qcEl('csSaveBtn'); btn.disabled = true;
     try{
