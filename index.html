@@ -584,6 +584,12 @@
   .qc-more[hidden]{ display:none; }
   .qc-none{ text-align:center; color:var(--ink-muted,#6b6458); font-size:13px; padding:18px 0; }
   .qc-list{ max-height:none; }
+
+  .qc-row .qc-left{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .qc-ico{ flex:none; width:42px; height:42px; border-radius:12px; background:rgba(18,184,163,0.12); color:var(--teal-dark); display:flex; align-items:center; justify-content:center; }
+  .qc-ico svg{ width:22px; height:22px; }
+  .qc-note{ }
+  .qc-desc{ font-size:11.5px; color:var(--ink-muted,#6b6458); margin-top:2px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -1175,7 +1181,7 @@
   <div class="panel" id="panel-calc">
 
     <div class="notice" style="margin-top:0;">
-      قسم "احسب عرض سعرك" يظهر في الموقع بعد ما تضيف منتج واحد على الأقل. الأسعار تكتبها بالريال العُماني (قبل الضريبة).
+      قسم "احسب عرض سعرك" يظهر في الموقع بعد ما تضيف خيار واحد على الأقل. الأفضل تخلي القائمة قصيرة (8 إلى 12 خيار) وكل خيار بأيقونة واسم واضح وسعر يشمل التركيب إذا تبي، وتقدر تكتب في "الوصف القصير" وش يشمل. السعر بالريال العُماني قبل الضريبة.
     </div>
 
     <div class="card">
@@ -1197,9 +1203,27 @@
           <label>الضريبة</label>
           <select id="cpTaxable"><option value="1">تُطبّق عليه الضريبة</option><option value="0">بدون ضريبة</option></select>
         </div>
-        <div class="field full">
-          <label>التصنيف (اختياري، مثال: كاميرات المراقبة)</label>
+        <div class="field">
+          <label>الأيقونة</label>
+          <select id="cpIcon">
+            <option value="">بدون أيقونة</option>
+            <option value="camera">كاميرا</option><option value="nvr">رسيفر / جهاز تسجيل</option>
+            <option value="lock">قفل ذكي</option><option value="switch">مفتاح إضاءة</option>
+            <option value="intercom">انتركوم</option><option value="wifi">واي فاي / شبكة</option>
+            <option value="poe">سويتش / شبكات</option><option value="alarm">إنذار</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>التصنيف (اختياري)</label>
           <input type="text" id="cpCategory" placeholder="كاميرات المراقبة">
+        </div>
+        <div class="field">
+          <label>وصف قصير بالعربي (اختياري، مثال: يشمل الكاميرا والكيبل والتركيب)</label>
+          <input type="text" id="cpNoteAr" placeholder="يشمل الكاميرا والكيبل والتركيب">
+        </div>
+        <div class="field">
+          <label>وصف قصير بالإنجليزي (اختياري)</label>
+          <input type="text" id="cpNoteEn" placeholder="Includes camera, cable and installation">
         </div>
       </div>
       <div style="margin-top:16px;">
@@ -1222,6 +1246,7 @@
     <div class="card">
       <h2><span class="dot"></span> منتجات الحاسبة (<span id="cpCount">0</span>)</h2>
       <div class="field" style="margin-bottom:12px;"><input type="text" id="cpSearch" placeholder="ابحث في المنتجات..."></div>
+      <div style="margin-bottom:12px;"><button class="btn btn-danger-ghost btn-sm" id="cpDeleteAll">حذف كل المنتجات دفعة وحدة</button></div>
       <div class="list" id="cpList"></div>
     </div>
 
@@ -1587,6 +1612,7 @@
   };
   const qc = { products: [], qty: {}, settings: Object.assign({}, QC_DEFAULTS), last: null };
   let cpEditingId = null;
+  let cpQuery = '';
   const CS_FIELDS = { csNameAr:'company_name_ar', csNameEn:'company_name_en', csPhone:'phone', csEmail:'email', csAddrAr:'address_ar', csAddrEn:'address_en', csVat:'vat_no', csTax:'taxRate', csDays:'validityDays', csNotesAr:'notes_ar', csNotesEn:'notes_en' };
   const qcEl = id => document.getElementById(id);
   const qcIsAr = () => document.documentElement.getAttribute('data-lang') !== 'en';
@@ -1604,7 +1630,7 @@
       const price = Number(p.price) || 0;
       const total = Math.round(price * q * 1000) / 1000;
       const tax = p.taxable === false ? 0 : Math.round(total * rate / 100 * 1000) / 1000;
-      lines.push({ name_ar: p.name_ar || p.name_en || '', name_en: p.name_en || p.name_ar || '', qty: q, price, tax, total });
+      lines.push({ name_ar: p.name_ar || p.name_en || '', name_en: p.name_en || p.name_ar || '', note_ar: p.note_ar || '', note_en: p.note_en || '', qty: q, price, tax, total });
     });
     const subtotal = Math.round(lines.reduce((a, l) => a + l.total, 0) * 1000) / 1000;
     const tax = Math.round(lines.reduce((a, l) => a + l.tax, 0) * 1000) / 1000;
@@ -1642,9 +1668,13 @@
     const all = qcFiltered(), shown = all.slice(0, qcView.limit);
     qcEl('qcList').innerHTML = shown.length ? shown.map(p => `
       <div class="qc-row ${qc.qty[p.id] ? 'on' : ''}" data-id="${p.id}">
-        <div>
-          <div class="qc-name">${qcBi(p.name_ar || p.name_en, p.name_en || p.name_ar)}</div>
-          <div class="qc-price">${qcFmt(Number(p.price) || 0)} OMR</div>
+        <div class="qc-left">
+          ${p.icon ? `<div class="qc-ico">${iconSvg(p.icon)}</div>` : ''}
+          <div>
+            <div class="qc-name">${qcBi(p.name_ar || p.name_en, p.name_en || p.name_ar)}</div>
+            ${(p.note_ar || p.note_en) ? `<div class="qc-desc">${qcBi(p.note_ar || p.note_en, p.note_en || p.note_ar)}</div>` : ''}
+            <div class="qc-price">${qcFmt(Number(p.price) || 0)} OMR</div>
+          </div>
         </div>
         <div class="qc-step">
           <button type="button" data-d="-1" aria-label="-">−</button>
@@ -1658,6 +1688,7 @@
   function qcRenderList(){
     const sec = qcEl('calculator'); if(!sec) return;
     sec.hidden = qc.products.length === 0;
+    const tools = document.querySelector('.qc-tools'); if(tools) tools.style.display = qc.products.length > 15 ? '' : 'none';
     qcRenderCats(); qcRenderRows(); qcRenderSummary();
   }
 
@@ -1746,7 +1777,7 @@
     const S = qc.settings, logo = (document.querySelector('header .brand img') || {}).src || '';
     const rows = q.t.lines.map((l, i) => `<tr>
       <td class="c">${i + 1}</td>
-      <td><div class="pa">${qcEsc(l.name_ar)}</div>${l.name_en && l.name_en !== l.name_ar ? `<div class="pe">${qcEsc(l.name_en)}</div>` : ''}</td>
+      <td><div class="pa">${qcEsc(l.name_ar)}</div>${l.name_en && l.name_en !== l.name_ar ? `<div class="pe">${qcEsc(l.name_en)}</div>` : ''}${(l.note_ar || l.note_en) ? `<div class="pn">${qcEsc(l.note_ar || l.note_en)}</div>` : ''}</td>
       <td class="c">${l.qty}</td><td class="n">${qcFmt(l.price)}</td><td class="n">${qcFmt(l.tax)}</td><td class="n">${qcFmt(l.total)}</td></tr>`).join('');
     return `<style>
       .qp{width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#221e19;font-family:'Cairo','Inter',Arial,sans-serif;direction:rtl;padding:44px 46px 36px;position:relative}
@@ -1772,6 +1803,7 @@
       .qp td.c,.qp th.c{text-align:center;width:54px}
       .qp td.n,.qp th.n{text-align:left;direction:ltr;font-family:'Inter',sans-serif;white-space:nowrap;width:92px}
       .qp .pa{font-weight:700}
+      .qp .pn{font-size:10.5px;color:#6b6458;margin-top:2px;line-height:1.6}
       .qp .pe{font-size:10.5px;color:#7a7365;font-family:'Inter',sans-serif;direction:ltr;text-align:right}
       .qp .tot{margin:18px 0 0;margin-inline-start:auto;width:330px;font-size:13px}
       .qp .tot div{display:flex;justify-content:space-between;padding:6px 10px}
@@ -1912,7 +1944,6 @@
   /* ---------- admin: calculator tab ---------- */
   const cpSave = items => setDoc(doc(db, 'settings', 'calc_catalog'), { items, updatedAt: Date.now() });
   const cpNewId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  let cpQuery = '';
 
   function qcRenderAdminProducts(){
     const list = qcEl('cpList'); if(!list) return;
@@ -1932,11 +1963,17 @@
         </div>
       </div>`).join('') + (rows.length > 60 ? `<div class="empty">يظهر أول 60 من ${rows.length} — استخدم البحث للوصول لأي منتج</div>` : '') + (!rows.length ? '<div class="empty">لا توجد نتائج</div>' : '');
   }
+  qcEl('cpDeleteAll').addEventListener('click', async () => {
+    if(!qc.products.length){ alert('القائمة فاضية أصلاً'); return; }
+    const ans = prompt('بيتم حذف كل منتجات الحاسبة (' + qc.products.length + ' منتج). للتأكيد اكتب كلمة: حذف');
+    if(ans === null || ans.trim() !== 'حذف') return;
+    try{ await cpSave([]); cpReset(); alert('تم حذف كل المنتجات'); }catch(err){ alert('تعذّر الحذف: ' + err.message); }
+  });
   qcEl('cpSearch').addEventListener('input', e => { cpQuery = e.target.value; qcRenderAdminProducts(); });
 
   function cpReset(){
     cpEditingId = null;
-    ['cpNameAr','cpNameEn','cpPrice','cpCategory'].forEach(i => qcEl(i).value = '');
+    ['cpNameAr','cpNameEn','cpPrice','cpCategory','cpNoteAr','cpNoteEn','cpIcon'].forEach(i => qcEl(i).value = '');
     qcEl('cpTaxable').value = '1';
     qcEl('cpAddBtn').textContent = 'إضافة المنتج';
     qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> إضافة منتج للحاسبة';
@@ -1954,6 +1991,7 @@
       qcEl('cpNameAr').value = p.name_ar || ''; qcEl('cpNameEn').value = p.name_en || '';
       qcEl('cpPrice').value = p.price; qcEl('cpTaxable').value = p.taxable === false ? '0' : '1';
       qcEl('cpCategory').value = p.category || '';
+      qcEl('cpIcon').value = p.icon || ''; qcEl('cpNoteAr').value = p.note_ar || ''; qcEl('cpNoteEn').value = p.note_en || '';
       qcEl('cpAddBtn').textContent = 'حفظ التعديلات';
       qcEl('cpFormTitle').innerHTML = '<span class="dot"></span> تعديل المنتج';
       qcEl('cpNameAr').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1964,7 +2002,7 @@
     if(!nameAr && !nameEn){ alert('اكتب اسم المنتج بلغة واحدة على الأقل'); return; }
     if(!isFinite(price) || price < 0){ alert('اكتب السعر بشكل صحيح، مثال: 45.000'); return; }
     const btn = qcEl('cpAddBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
-    const data = { name_ar: nameAr, name_en: nameEn, price: Math.round(price * 1000) / 1000, taxable: qcEl('cpTaxable').value !== '0', category: qcEl('cpCategory').value.trim() };
+    const data = { name_ar: nameAr, name_en: nameEn, price: Math.round(price * 1000) / 1000, taxable: qcEl('cpTaxable').value !== '0', category: qcEl('cpCategory').value.trim(), icon: qcEl('cpIcon').value, note_ar: qcEl('cpNoteAr').value.trim(), note_en: qcEl('cpNoteEn').value.trim() };
     try{
       const items = cpEditingId
         ? qc.products.map(x => x.id === cpEditingId ? Object.assign({}, x, data) : x)
