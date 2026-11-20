@@ -2022,6 +2022,9 @@
     nm:  ['الاسم','اسم المنتج','المنتج','اسم الصنف','الصنف','name','product','item','description','الوصف'],
     pr:  ['السعر','سعر الوحدة','سعر البيع','price','unit price','selling price','sell price'],
     cat: ['التصنيف','الفئة','القسم','category','group'],
+    icon:['الأيقونة','الايقونة','icon'],
+    nar: ['الوصف بالعربي','وصف عربي','note_ar','description_ar'],
+    nen: ['الوصف بالإنجليزي','الوصف بالانجليزي','وصف انجليزي','note_en','description_en'],
     tax: ['الضريبة','tax','vat']
   };
   function cpPick(row, keys){
@@ -2043,7 +2046,10 @@
       const key = (ar + '|' + en + '|' + price).toLowerCase();
       if(seen.has(key)){ skipped++; return; }
       seen.add(key);
-      out.push({ name_ar: ar, name_en: en, price: Math.round(price * 1000) / 1000, taxable, category: String(cpPick(r, COLS.cat)).trim() });
+      const icon = String(cpPick(r, COLS.icon)).trim().toLowerCase();
+      out.push({ name_ar: ar, name_en: en, price: Math.round(price * 1000) / 1000, taxable, category: String(cpPick(r, COLS.cat)).trim(),
+        icon: ['camera','nvr','lock','switch','intercom','wifi','poe','alarm'].includes(icon) ? icon : '',
+        note_ar: String(cpPick(r, COLS.nar)).trim(), note_en: String(cpPick(r, COLS.nen)).trim() });
     });
     return { items: out, skipped };
   }
